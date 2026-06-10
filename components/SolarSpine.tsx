@@ -14,8 +14,8 @@ export default function SolarSpine() {
       if (!trackRef.current) return;
       const totalScroll = document.documentElement.scrollHeight - window.innerHeight;
       if (totalScroll <= 0) return;
-      const progress = (window.scrollY / totalScroll) * 100;
-      trackRef.current.style.height = `${progress}%`;
+      const progress = window.scrollY / totalScroll;
+      trackRef.current.style.transform = `scaleY(${progress})`;
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
