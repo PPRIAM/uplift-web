@@ -36,10 +36,13 @@ function toDate(dateInput: string | Date): Date {
   }
   
   // Fix for Postgres short offsets like "-04" or "+00" which JS doesn't always like
-  // Matches "-XX" or "+XX" at the end of the string
-  const offsetMatch = normalized.match(/[+-](\d{2})$/);
-  if (offsetMatch) {
-    normalized += ':00';
+  // Matches "-XX" or "+XX" at the end of the string.
+  // We only run this if we know it's a datetime (contains 'T') to avoid matching YYYY-MM-DD.
+  if (normalized.includes('T')) {
+    const offsetMatch = normalized.match(/[+-](\d{2})$/);
+    if (offsetMatch) {
+      normalized += ':00';
+    }
   }
   
   const d = new Date(normalized);
