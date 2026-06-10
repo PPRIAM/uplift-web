@@ -1,0 +1,34 @@
+{
+  "meta": {
+    "brand_name": "Adoma's CHECKPOINT",
+    "description": "Core design tokens for UI implementation."
+  },
+  "colors": {
+    "primary": {
+      "DEFAULT": "#C40001",
+      "hover": "#9a0000",
+      "foreground": "#FFFFFF"
+    },
+    "secondary": {
+      "DEFAULT": "#FEB518",
+      "foreground": "#020C2F"
+    },
+    "background": "#E9EAE4",
+    "foreground": "#020C2F",
+    "muted": "#E9EAE4",
+    "accent": "#FEB518",
+    "destructive": "#EF4444",
+    "success": "#10B981"
+  },
+  "typography": {
+    "font_family_headings": ["Pacifico", "cursive"],
+    "font_family_body": ["Outfit", "sans-serif"],
+    "font_weight_bold": "700",
+    "font_weight_normal": "400"
+  },
+  "ui": {
+    "border_radius_default": "0.5rem",
+    "border_radius_small": "0.25rem",
+    "spacing_base_unit": "4px"
+  }
+}

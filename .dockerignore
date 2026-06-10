@@ -1,0 +1,14 @@
+node_modules
+.next
+.env.local
+.git
+Dockerfile
+.dockerignore
+package-lock.json
+npm-debug.log
+README.md
+deploy-gcp.sh
+supabase_*.sql
+diagnose-reservations.mjs
+test-supabase.mjs
+prisma

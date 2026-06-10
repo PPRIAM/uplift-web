@@ -1,0 +1,140 @@
+D:\UPLIFT20\uplift-web\app\about\page.tsx:182: <Link href="/events" className="btn-primary" style={{ textDecoration: 'none', fontSize: '15px', padding: '14px 32px' }}>Explorer les événements</Link>
+D:\UPLIFT20\uplift-web\app\admin\analytics\page.tsx:2: import { analyticsData, events, tickets } from '@/lib/mockData';
+D:\UPLIFT20\uplift-web\app\admin\emails\campaigns\page.tsx:32: events?: { name: string } | null;
+D:\UPLIFT20\uplift-web\app\admin\emails\campaigns\page.tsx:60: const [events, setEvents] = useState<any[]>([]);
+D:\UPLIFT20\uplift-web\app\admin\emails\campaigns\page.tsx:88: .from('events')
+D:\UPLIFT20\uplift-web\app\admin\emails\campaigns\page.tsx:118: html = html.replace(/{{event_name}}/g, events.find(e => e.id === newEventId)?.name || 'Nom Événement');
+D:\UPLIFT20\uplift-web\app\admin\emails\campaigns\page.tsx:240: const event = events.find(e => e.id === campaign.event_id);
+D:\UPLIFT20\uplift-web\app\admin\emails\campaigns\page.tsx:408: {events.map(ev => <option key={ev.id} value={ev.id}>{ev.name}</option>)}
+D:\UPLIFT20\uplift-web\app\admin\emails\campaigns\page.tsx:620: {campaign.events?.name && (
+D:\UPLIFT20\uplift-web\app\admin\emails\campaigns\page.tsx:622: <Calendar size={11} /> {campaign.events.name}
+D:\UPLIFT20\uplift-web\app\admin\emails\compose\page.tsx:75: const [events, setEvents] = useState<EventInfo[]>([]);
+D:\UPLIFT20\uplift-web\app\admin\emails\compose\page.tsx:102: .from('events')
+D:\UPLIFT20\uplift-web\app\admin\emails\compose\page.tsx:130: const event = events.find(e => e.id === eventId);
+D:\UPLIFT20\uplift-web\app\admin\emails\compose\page.tsx:149: }, [recipientFilter, events]);
+D:\UPLIFT20\uplift-web\app\admin\emails\compose\page.tsx:463: {events.map(ev => (
+D:\UPLIFT20\uplift-web\app\admin\events\page.tsx:28: const [events, setEvents] = useState<any[]>([]);
+D:\UPLIFT20\uplift-web\app\admin\events\page.tsx:59: .from('events')
+D:\UPLIFT20\uplift-web\app\admin\events\page.tsx:68: const filtered = events.filter(e =>
+D:\UPLIFT20\uplift-web\app\admin\events\page.tsx:76: const { error } = await supabase.from('events').update({ published: !currentStatus }).eq('id', id).select();
+D:\UPLIFT20\uplift-web\app\admin\events\page.tsx:85: const { data, error } = await supabase.from('events').delete().eq('id', id).select();
+D:\UPLIFT20\uplift-web\app\admin\events\page.tsx:193: const { error: updateError } = await supabase.from('events').update(eventData).eq('id', editEvent.id).select();
+D:\UPLIFT20\uplift-web\app\admin\events\page.tsx:196: const { data: insertData, error: insertError } = await supabase.from('events').insert([eventData]).select().single();
+D:\UPLIFT20\uplift-web\app\admin\events\page.tsx:212: await supabase.from('events').update({ cover_image: uploadedUrl }).eq('id', savedEventId);
+D:\UPLIFT20\uplift-web\app\admin\events\page.tsx:237: <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>{events.length} événements au total</p>
+D:\UPLIFT20\uplift-web\app\admin\events\page.tsx:324: <Link href={`/events/${event.id}`} title="Voir" target="_blank" style={{ padding: '6px', borderRadius: '6px', background: 'var(--bg-elevated)', display: 'flex', color: 'var(--text-muted)', border: '1px solid var(--border-subtle)', transition: 'all 0.2s' }}>
+D:\UPLIFT20\uplift-web\app\admin\layout.tsx:14: { href: '/admin/events', label: 'Événements', icon: Calendar },
+D:\UPLIFT20\uplift-web\app\admin\page.tsx:68: // 3. Get upcoming events count (published and date > now)
+D:\UPLIFT20\uplift-web\app\admin\page.tsx:70: .from('events')
+D:\UPLIFT20\uplift-web\app\admin\page.tsx:85: events (name)
+D:\UPLIFT20\uplift-web\app\admin\page.tsx:92: // 5. Get upcoming events list
+D:\UPLIFT20\uplift-web\app\admin\page.tsx:93: const { data: eventsList, error: eventsError } = await supabase
+D:\UPLIFT20\uplift-web\app\admin\page.tsx:94: .from('events')
+D:\UPLIFT20\uplift-web\app\admin\page.tsx:101: if (eventsError) throw eventsError;
+D:\UPLIFT20\uplift-web\app\admin\page.tsx:109: setUpcomingEvents(eventsList || []);
+D:\UPLIFT20\uplift-web\app\admin\page.tsx:172: <Link href="/admin/events" style={{ fontSize: '12px', color: 'var(--brand-secondary)', textDecoration: 'none', fontWeight: '600' }}>Voir tout →</Link>
+D:\UPLIFT20\uplift-web\app\admin\page.tsx:220: <p style={{ fontSize: '11px', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{res.events?.name}</p>
+D:\UPLIFT20\uplift-web\app\admin\scanner\page.tsx:117: <MapPin size={16} /> {result.details.reservations.events.name}
+D:\UPLIFT20\uplift-web\app\admin\sessions\page.tsx:30: const [events, setEvents] = useState<any[]>([]);
+D:\UPLIFT20\uplift-web\app\admin\sessions\page.tsx:56: events (name),
+D:\UPLIFT20\uplift-web\app\admin\sessions\page.tsx:64: // Fetch events and speakers for dropdowns
+D:\UPLIFT20\uplift-web\app\admin\sessions\page.tsx:65: const { data: evtData } = await supabase.from('events').select('id, name').eq('published', true);
+D:\UPLIFT20\uplift-web\app\admin\sessions\page.tsx:78: setForm({ event_id: events[0]?.id || '', title: '', description: '', type: 'conference', start_time: '', end_time: '', speaker_id: '' });
+D:\UPLIFT20\uplift-web\app\admin\sessions\page.tsx:173: <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>· {ses.events?.name}</span>
+D:\UPLIFT20\uplift-web\app\admin\sessions\page.tsx:215: {events.map(ev => <option key={ev.id} value={ev.id}>{ev.name}</option>)}
+D:\UPLIFT20\uplift-web\app\admin\tickets\page.tsx:8: const [events, setEvents] = useState<any[]>([]);
+D:\UPLIFT20\uplift-web\app\admin\tickets\page.tsx:35: events (id, name, capacity)
+D:\UPLIFT20\uplift-web\app\admin\tickets\page.tsx:63: eventStats[t.event_id] = { baseSold: 0, capacity: t.events?.capacity || 0 };
+D:\UPLIFT20\uplift-web\app\admin\tickets\page.tsx:76: // Fetch events for dropdown
+D:\UPLIFT20\uplift-web\app\admin\tickets\page.tsx:77: const { data: evtData } = await supabase.from('events').select('id, name').eq('published', true);
+D:\UPLIFT20\uplift-web\app\admin\tickets\page.tsx:88: setForm({ event_id: events[0]?.id || '', name: '', price: '0', quantity: '100', benefits: '', available: true, allocation_mode: 'standard', pricing_tiers: [] });
+D:\UPLIFT20\uplift-web\app\admin\tickets\page.tsx:223: <p style={{ fontWeight: '500', color: 'var(--text-primary)' }}>{ticket.events?.name}</p>
+D:\UPLIFT20\uplift-web\app\admin\tickets\page.tsx:287: {events.map(ev => <option key={ev.id} value={ev.id}>{ev.name}</option>)}
+D:\UPLIFT20\uplift-web\app\api\admin\reservations\action\route.ts:36: .select('*, events(name, date_time, location_name, city)')
+D:\UPLIFT20\uplift-web\app\api\admin\reservations\action\route.ts:101: <p>Nous avons reçu votre paiement pour <strong>${reservation.events.name}</strong> avec succès.</p>
+D:\UPLIFT20\uplift-web\app\api\admin\reservations\action\route.ts:104: <p>Date : ${new Date(reservation.events.date_time).toLocaleString()}</p>
+D:\UPLIFT20\uplift-web\app\api\admin\reservations\action\route.ts:105: <p>Lieu : ${reservation.events.location_name}, ${reservation.events.city}</p>
+D:\UPLIFT20\uplift-web\app\api\admin\reservations\action\route.ts:142: <p>Malheureusement, nous n'avons pas pu vérifier la preuve de paiement que vous avez envoyée pour <strong>${reservation.events.name}</strong>.</p>
+D:\UPLIFT20\uplift-web\app\api\emails\campaigns\route.ts:25: .select('*, events(name)')
+D:\UPLIFT20\uplift-web\app\api\emails\campaigns\[id]\route.ts:25: .select('*, events(name)')
+D:\UPLIFT20\uplift-web\app\api\reservations\route.ts:272: .from('events')
+D:\UPLIFT20\uplift-web\app\api\stream\access\route.ts:17: //   1. events.cloudflare_live_input_id is NULL (migration not run, or not set)
+D:\UPLIFT20\uplift-web\app\api\stream\access\route.ts:67: .from('events')
+D:\UPLIFT20\uplift-web\app\api\stream\access\route.ts:79: .from('events')
+D:\UPLIFT20\uplift-web\app\api\stream\access\route.ts:87: console.error('[Stream Access] No published events found:', error?.message);
+D:\UPLIFT20\uplift-web\app\api\tickets\validate\route.ts:28: .select('*, reservations(full_name, email, events(name))')
+D:\UPLIFT20\uplift-web\app\confirmation\page.tsx:21: supabase.from('events').select('name, date_time, location_name, city').eq('id', eventId).single().then(({ data }) => setEvent(data));
+D:\UPLIFT20\uplift-web\app\confirmation\page.tsx:61: <Link href={`/events/${eventId}`} className="btn-primary" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+D:\UPLIFT20\uplift-web\app\confirmation\page.tsx:65: <Link href="/events" className="btn-secondary" style={{ textDecoration: 'none' }}>
+D:\UPLIFT20\uplift-web\app\confirmation\page.tsx:89: <Link href={eventId ? `/events/${eventId}` : '/events'} className="btn-primary" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+D:\UPLIFT20\uplift-web\app\confirmation\page.tsx:118: <Link href="/events" className="btn-primary" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+D:\UPLIFT20\uplift-web\app\events\EventsClient.tsx:170: href={`/events/${event.id}`}
+D:\UPLIFT20\uplift-web\app\events\page.tsx:15: const { data: events } = await supabase
+D:\UPLIFT20\uplift-web\app\events\page.tsx:16: .from('events')
+D:\UPLIFT20\uplift-web\app\events\page.tsx:34: <EventsClient initialEvents={events || []} />
+D:\UPLIFT20\uplift-web\app\events\[id]\layout.tsx:17: .from('events')
+D:\UPLIFT20\uplift-web\app\events\[id]\page.tsx:17: const { data: event } = await supabase.from('events').select('*').eq('id', id).single();
+D:\UPLIFT20\uplift-web\app\events\[id]\page.tsx:92: supabase.from('events').select('*').eq('id', id).single(),
+D:\UPLIFT20\uplift-web\app\events\[id]\page.tsx:115: <Link href="/events" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'var(--text-muted)', textDecoration: 'none', fontSize: '14px', marginBottom: '32px' }}>
+D:\UPLIFT20\uplift-web\app\my-reservations\page.tsx:241: const { data: evt } = await supabase.from('events')
+D:\UPLIFT20\uplift-web\app\my-reservations\page.tsx:253: .select('*, events(name, date_time, location_name, city)')
+D:\UPLIFT20\uplift-web\app\my-reservations\page.tsx:475: <Link href={eventId ? `/events/${eventId}` : '/events'} className="btn-primary" style={{ textDecoration: 'none' }}>
+D:\UPLIFT20\uplift-web\app\my-reservations\page.tsx:478: <Link href="/events" className="btn-secondary" style={{ textDecoration: 'none' }}>
+D:\UPLIFT20\uplift-web\app\my-reservations\page.tsx:510: <Link href="/events" className="btn-secondary" style={{ textDecoration: 'none' }}>Parcourir les événements</Link>
+D:\UPLIFT20\uplift-web\app\my-reservations\page.tsx:522: <Link href="/events" className="btn-primary" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+D:\UPLIFT20\uplift-web\app\my-reservations\page.tsx:536: <h3 style={{ fontSize: '20px', fontWeight: '800', marginBottom: '12px' }}>{res.events?.name}</h3>
+D:\UPLIFT20\uplift-web\app\my-reservations\page.tsx:540: {res.events?.date_time ? formatDateTime(res.events.date_time) : 'À venir'}
+D:\UPLIFT20\uplift-web\app\my-reservations\page.tsx:544: {res.events?.location_name}, {res.events?.city}
+D:\UPLIFT20\uplift-web\app\my-reservations\page.tsx:553: <Link href={`/events/${res.event_id}`} className="btn-secondary" style={{ textDecoration: 'none', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+D:\UPLIFT20\uplift-web\app\my-reservations\page.tsx:607: <Link href={eventId ? `/events/${eventId}` : '/events'} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'var(--text-muted)', textDecoration: 'none', fontSize: '14px', marginBottom: '32px', fontWeight: '500' }}>
+D:\UPLIFT20\uplift-web\app\page.tsx:9: // Fetch upcoming events
+D:\UPLIFT20\uplift-web\app\page.tsx:11: .from('events')
+D:\UPLIFT20\uplift-web\app\page.tsx:18: // Fetch featured speakers
+D:\UPLIFT20\uplift-web\app\page.tsx:19: const { data: featuredSpeakers } = await supabase
+D:\UPLIFT20\uplift-web\app\page.tsx:26: // Fetch count of published events
+D:\UPLIFT20\uplift-web\app\page.tsx:28: .from('events')
+D:\UPLIFT20\uplift-web\app\page.tsx:41: featuredSpeakers={featuredSpeakers}
+D:\UPLIFT20\uplift-web\app\sitemap.ts:10: '/events',
+D:\UPLIFT20\uplift-web\app\sitemap.ts:25: const { data: events } = await supabase
+D:\UPLIFT20\uplift-web\app\sitemap.ts:26: .from('events')
+D:\UPLIFT20\uplift-web\app\sitemap.ts:30: if (events) {
+D:\UPLIFT20\uplift-web\app\sitemap.ts:31: const eventRoutes = events.map((event) => ({
+D:\UPLIFT20\uplift-web\app\sitemap.ts:32: url: `${baseUrl}/events/${event.id}`,
+D:\UPLIFT20\uplift-web\app\unauthorized\page.tsx:61: href="/events"
+D:\UPLIFT20\uplift-web\components\Footer.tsx:12: { label: 'Événements', href: '/events' },
+D:\UPLIFT20\uplift-web\components\HomePageClient.tsx:28: featuredSpeakers: any[] | null;
+D:\UPLIFT20\uplift-web\components\HomePageClient.tsx:35: featuredSpeakers,
+D:\UPLIFT20\uplift-web\components\HomePageClient.tsx:139: trigger: '.events-section-trigger',
+D:\UPLIFT20\uplift-web\components\HomePageClient.tsx:196: href="/events"
+D:\UPLIFT20\uplift-web\components\HomePageClient.tsx:414: <section className="py-24 md:py-36 px-6 w-full events-section-trigger">
+D:\UPLIFT20\uplift-web\components\HomePageClient.tsx:426: href="/events"
+D:\UPLIFT20\uplift-web\components\HomePageClient.tsx:440: <Link href={`/events/${upcomingEvents[0].id}`} className="block group text-decoration-none color-inherit">
+D:\UPLIFT20\uplift-web\components\HomePageClient.tsx:445: src={upcomingEvents[0].cover_image || 'https://picsum.photos/seed/ayibuzz-featured/1200/800'}
+D:\UPLIFT20\uplift-web\components\HomePageClient.tsx:496: <Link href={`/events/${event.id}`} className="block group text-decoration-none color-inherit">
+D:\UPLIFT20\uplift-web\components\HomePageClient.tsx:540: {featuredSpeakers && featuredSpeakers.length > 0 && (
+D:\UPLIFT20\uplift-web\components\HomePageClient.tsx:567: {featuredSpeakers.map((sp: any, i: number) => (
+D:\UPLIFT20\uplift-web\components\HomePageClient.tsx:602: <div className="absolute inset-0 z-0 bg-[radial-gradient(circle_at_bottom,rgba(45,91,255,0.05)_0%,transparent_60%)] pointer-events-none" />
+D:\UPLIFT20\uplift-web\components\Navbar.tsx:27: { href: '/events', label: 'Événements' },
+D:\UPLIFT20\uplift-web\debug-supabase.mjs:10: // 1. Fetch events
+D:\UPLIFT20\uplift-web\debug-supabase.mjs:11: const { data: events, error: evErr } = await supabase.from('events').select('id, name, registered_count');
+D:\UPLIFT20\uplift-web\debug-supabase.mjs:12: console.log('\n📅 Events:', events || evErr);
+D:\UPLIFT20\uplift-web\debug-supabase.mjs:19: if (events && events.length > 0) {
+D:\UPLIFT20\uplift-web\debug-supabase.mjs:21: event_id_param: events[0].id,
+D:\UPLIFT20\uplift-web\diagnose-reservations.mjs:29: const { data: events, error: evtError } = await supabase.from('events').select('id, name').limit(1);
+D:\UPLIFT20\uplift-web\diagnose-reservations.mjs:30: if (evtError || !events?.length) {
+D:\UPLIFT20\uplift-web\diagnose-reservations.mjs:35: const event = events[0];
+D:\UPLIFT20\uplift-web\lib\mockData.ts:79: featured: boolean;
+D:\UPLIFT20\uplift-web\lib\mockData.ts:179: export const events: Event[] = [
+D:\UPLIFT20\uplift-web\lib\mockData.ts:197: coverImage: '/images/events/uplift2.jpg',
+D:\UPLIFT20\uplift-web\lib\mockData.ts:205: featured: true,
+D:\UPLIFT20\uplift-web\seed_supabase.mjs:11: const { data: event, error: errEvent } = await supabase.from('events').upsert({
+D:\UPLIFT20\uplift-web\seed_supabase.mjs:23: featured: true,
+D:\UPLIFT20\uplift-web\test-security.mjs:46: // 3. Test public access to events (Should still be visible)
+D:\UPLIFT20\uplift-web\test-security.mjs:47: console.log('\n3. Testing anonymous select on events (Public data)...');
+D:\UPLIFT20\uplift-web\test-security.mjs:49: .from('events')
+D:\UPLIFT20\uplift-web\test-security.mjs:54: console.log('❌ Unexpected error fetching events:', eventError.message);
+D:\UPLIFT20\uplift-web\test-supabase.mjs:10: const { data, error } = await supabase.from('events').select('id').limit(1);
+D:\UPLIFT20\uplift-web\test-supabase.mjs:14: console.log("✅ SUCCÈS : Connecté à Supabase ! (Cependant, la table 'events' n'existe pas encore. Vous devez exécuter 'supabase_schema.sql').");
+D:\UPLIFT20\uplift-web\test-supabase.mjs:19: console.log("✅ SUCCÈS TOTAL : Connecté à Supabase ET la table 'events' a été trouvée !");
+D:\UPLIFT20\uplift-web\verify-fix.mjs:36: const { data, error } = await supabase.from('events').select('count', { head: true });
+D:\UPLIFT20\uplift-web\verify-layout.mjs:246: - **API Status**: Healthy. Supabase fetching returns events and speakers without connection latency.

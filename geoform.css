@@ -1,0 +1,98 @@
+@font-face {
+    font-family: 'Geoform';
+    font-style: normal;
+    font-weight: 400;
+    src: local('Geoform'), url('https://fonts.cdnfonts.com/s/107907/Geoform-BF6556c6e73002d.woff') format('woff');
+}
+@font-face {
+    font-family: 'Geoform';
+    font-style: italic;
+    font-weight: 400;
+    src: local('Geoform'), url('https://fonts.cdnfonts.com/s/107907/Geoform-Italic-BF6556c6e72e7a7.woff') format('woff');
+}
+@font-face {
+    font-family: 'Geoform';
+    font-style: normal;
+    font-weight: 100;
+    src: local('Geoform'), url('https://fonts.cdnfonts.com/s/107907/Geoform-Thin-BF6556c6e72e8c9.woff') format('woff');
+}
+@font-face {
+    font-family: 'Geoform';
+    font-style: italic;
+    font-weight: 100;
+    src: local('Geoform'), url('https://fonts.cdnfonts.com/s/107907/Geoform-ThinItalic-BF6556c6e758695.woff') format('woff');
+}
+@font-face {
+    font-family: 'Geoform';
+    font-style: normal;
+    font-weight: 250;
+    src: local('Geoform'), url('https://fonts.cdnfonts.com/s/107907/Geoform-ExtraLight-BF6556c6e7587d5.woff') format('woff');
+}
+@font-face {
+    font-family: 'Geoform';
+    font-style: italic;
+    font-weight: 250;
+    src: local('Geoform'), url('https://fonts.cdnfonts.com/s/107907/Geoform-ExtraLightItalic-BF6556c6e726a6e.woff') format('woff');
+}
+@font-face {
+    font-family: 'Geoform';
+    font-style: normal;
+    font-weight: 300;
+    src: local('Geoform'), url('https://fonts.cdnfonts.com/s/107907/Geoform-Light-BF6556c6e751770.woff') format('woff');
+}
+@font-face {
+    font-family: 'Geoform';
+    font-style: italic;
+    font-weight: 300;
+    src: local('Geoform'), url('https://fonts.cdnfonts.com/s/107907/Geoform-LightItalic-BF6556c6e74adf6.woff') format('woff');
+}
+@font-face {
+    font-family: 'Geoform';
+    font-style: normal;
+    font-weight: 500;
+    src: local('Geoform'), url('https://fonts.cdnfonts.com/s/107907/Geoform-Medium-BF6556c6e620ac4.woff') format('woff');
+}
+@font-face {
+    font-family: 'Geoform';
+    font-style: italic;
+    font-weight: 500;
+    src: local('Geoform'), url('https://fonts.cdnfonts.com/s/107907/Geoform-MediumItalic-BF6556c6e73a415.woff') format('woff');
+}
+@font-face {
+    font-family: 'Geoform';
+    font-style: normal;
+    font-weight: 700;
+    src: local('Geoform'), url('https://fonts.cdnfonts.com/s/107907/Geoform-Bold-BF6556c6e7190d1.woff') format('woff');
+}
+@font-face {
+    font-family: 'Geoform';
+    font-style: normal;
+    font-weight: 700;
+    src: local('Geoform'), url('https://fonts.cdnfonts.com/s/107907/Geoform-BoldItalic-BF6556c6e753041.woff') format('woff');
+}
+@font-face {
+    font-family: 'Geoform';
+    font-style: normal;
+    font-weight: 800;
+    src: local('Geoform'), url('https://fonts.cdnfonts.com/s/107907/Geoform-ExtraBold-BF6556c6e755e60.woff') format('woff');
+}
+@font-face {
+    font-family: 'Geoform';
+    font-style: italic;
+    font-weight: 800;
+    src: local('Geoform'), url('https://fonts.cdnfonts.com/s/107907/Geoform-ExtraBoldItalic-BF6556c6e7447bb.woff') format('woff');
+}
+@font-face {
+    font-family: 'Geoform';
+    font-style: normal;
+    font-weight: 900;
+    src: local('Geoform'), url('https://fonts.cdnfonts.com/s/107907/Geoform-Heavy-BF6556c6e708a5d.woff') format('woff');
+}
+@font-face {
+    font-family: 'Geoform';
+    font-style: italic;
+    font-weight: 900;
+    src: local('Geoform'), url('https://fonts.cdnfonts.com/s/107907/Geoform-HeavyItalic-BF6556c6e72fe24.woff') format('woff');
+}
+
+

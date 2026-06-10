@@ -1,0 +1,69 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Event {
+  id               String   @id @default(uuid())
+  name             String
+  tagline          String?
+  description      String
+  date_time        DateTime
+  timezone         String
+  location_name    String
+  location_details String?
+  city             String?
+  created_at       DateTime @default(now())
+
+  sessions         Session[]
+  reservations     Reservation[]
+}
+
+model Session {
+  id          String    @id @default(uuid())
+  event_id    String
+  title       String
+  description String
+  type        String    // conference | workshop
+  start_time  DateTime?
+  end_time    DateTime?
+
+  event       Event     @relation(fields: [event_id], references: [id])
+  speakers    SessionSpeaker[]
+}
+
+model Speaker {
+  id            String   @id @default(uuid())
+  full_name     String
+  role          String
+  bio           String
+  profile_image String
+
+  sessions      SessionSpeaker[]
+}
+
+model SessionSpeaker {
+  session_id String
+  speaker_id String
+
+  session    Session @relation(fields: [session_id], references: [id])
+  speaker    Speaker @relation(fields: [speaker_id], references: [id])
+
+  @@id([session_id, speaker_id])
+}
+
+model Reservation {
+  id         String   @id @default(uuid())
+  event_id   String
+  full_name  String
+  email      String
+  quantity   Int
+  status     String   // pending | confirmed
+  created_at DateTime @default(now())
+
+  event      Event    @relation(fields: [event_id], references: [id])
+}
