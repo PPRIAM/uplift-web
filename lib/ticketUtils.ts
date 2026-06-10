@@ -64,3 +64,11 @@ export function calculateTicketStats(event: EventForStats, tickets: TicketForSta
     fillPct,
   };
 }
+
+/**
+ * Generates a random ticket code given user initials.
+ */
+export function generateTicketCode(initials: string): string {
+  const randomStr = Math.random().toString(36).substring(2, 8).toUpperCase();
+  return `UP-${initials}-${randomStr}`;
+}
