@@ -223,8 +223,10 @@ export async function POST(req: NextRequest) {
       await supabase.from('email_messages').insert(dbLogsToInsert);
     }
 
-    // Update campaign progress after each chunk
-    if (campaign_id) {
+    // Update campaign progress periodically
+    // We update every 5 chunks (500 emails) or on the last chunk,
+    // solving the N+1 blocking issue while retaining real-time progress.
+    if (campaign_id && (i % (BATCH_SIZE * 5) === 0 || i + BATCH_SIZE >= allPayloads.length)) {
       await supabase
         .from('email_campaigns')
         .update({ sent_count: sentCount, failed_count: failedCount })
