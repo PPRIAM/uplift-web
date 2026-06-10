@@ -75,6 +75,15 @@
   --radius-button: var(--radius-button);
   --radius-card: var(--radius-card);
 
+  /* Mappage des espacements pour Tailwind v4 */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+  --spacing-3xl: 80px;
+
   /* Définition des animations personnalisées */
   --animate-float: float 16s ease-in-out infinite;
   --animate-pulse-glow: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
