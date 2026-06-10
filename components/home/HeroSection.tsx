@@ -14,6 +14,7 @@ interface HeroSectionProps {
   locationName: string;
   inscritsCount: number;
   placesRestantes: number;
+  isAyibuzzMedia?: boolean;
 }
 
 // Section Hero d'accueil UPLIFT 2.0 (conception asymétrique et compacte)
@@ -28,6 +29,7 @@ export default function HeroSection({
   locationName,
   inscritsCount,
   placesRestantes,
+  isAyibuzzMedia = false,
 }: HeroSectionProps) {
   return (
     <section 
@@ -67,36 +69,40 @@ export default function HeroSection({
 
             {/* Boutons d'action principaux en cobalt */}
             <div className="animate-fade-in-up animate-delay-400 flex flex-wrap gap-4 items-center">
-              <Link 
-                className="btn-primary no-underline text-sm py-3 px-6 inline-flex items-center gap-2" 
-                href={`/events/${fallbackEventId}`}
-              >
-                Rejoindre l&apos;élan
-                <ArrowRight size={16} />
-              </Link>
+              {!isAyibuzzMedia ? (
+                <Link
+                  className="btn-primary no-underline text-sm py-3 px-6 inline-flex items-center gap-2"
+                  href={`/events/${fallbackEventId}`}
+                >
+                  Rejoindre l&apos;élan
+                  <ArrowRight size={16} />
+                </Link>
+              ) : null}
               <Link 
                 className="btn-secondary no-underline text-sm py-3 px-6 text-[#0F172A] border-[#0F172A] hover:bg-[#0E1AD4]/5" 
                 href="/events"
               >
-                En savoir plus
+                {isAyibuzzMedia ? "Nos événements" : "En savoir plus"}
               </Link>
             </div>
 
             {/* Détails logistiques rapides sous forme de barre aérée */}
-            <div className="animate-fade-in-up animate-delay-500 flex flex-wrap gap-x-6 gap-y-3 mt-12 pt-6 border-t border-slate-200 w-full max-w-[580px]">
-              <div className="flex items-center gap-2 text-sm font-semibold text-[#334155]">
-                <Calendar size={15} className="text-[#0E1AD4]" />
-                {eventDateText}
+            {!isAyibuzzMedia && (
+              <div className="animate-fade-in-up animate-delay-500 flex flex-wrap gap-x-6 gap-y-3 mt-12 pt-6 border-t border-slate-200 w-full max-w-[580px]">
+                <div className="flex items-center gap-2 text-sm font-semibold text-[#334155]">
+                  <Calendar size={15} className="text-[#0E1AD4]" />
+                  {eventDateText}
+                </div>
+                <div className="flex items-center gap-2 text-sm font-semibold text-[#334155]">
+                  <MapPin size={15} className="text-[#0E1AD4]" />
+                  {locationName}
+                </div>
+                <div className="flex items-center gap-2 text-sm font-semibold text-[#334155]">
+                  <Users size={15} className="text-[#0E1AD4]" />
+                  <span className="font-mono">{inscritsCount}</span> inscrits • <span className="font-mono">{placesRestantes}</span> places restantes
+                </div>
               </div>
-              <div className="flex items-center gap-2 text-sm font-semibold text-[#334155]">
-                <MapPin size={15} className="text-[#0E1AD4]" />
-                {locationName}
-              </div>
-              <div className="flex items-center gap-2 text-sm font-semibold text-[#334155]">
-                <Users size={15} className="text-[#0E1AD4]" />
-                <span className="font-mono">{inscritsCount}</span> inscrits • <span className="font-mono">{placesRestantes}</span> places restantes
-              </div>
-            </div>
+            )}
 
           </div>
           

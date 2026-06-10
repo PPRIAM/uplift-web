@@ -130,7 +130,7 @@ export default function AdminDashboard() {
           // Recherche dans les événements
           supabase
             .from('events')
-            .select('id, name, city, date_time, location_name, published, featured, is_live')
+            .select('id, name, city, date_time, location_name, published, is_featured, is_live')
             .or(`name.ilike.%${query}%,city.ilike.%${query}%,location_name.ilike.%${query}%`)
             .limit(5),
           
@@ -205,11 +205,11 @@ export default function AdminDashboard() {
     const supabase = createClient();
 
     try {
-      // 1. Événement en vedette (featured = true)
+      // 1. Événement en vedette (is_featured = true)
       const { data: featData, error: featError } = await supabase
         .from('events')
         .select('*')
-        .eq('featured', true)
+        .eq('is_featured', true)
         .maybeSingle();
 
       if (featError) throw featError;
