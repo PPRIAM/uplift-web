@@ -3,6 +3,7 @@ import { Resend } from 'resend';
 import { createHash } from 'crypto';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { getSupabase, getSupabaseAdmin } from '@/utils/supabase/admin';
+import { generateTicketCode } from '@/lib/ticketUtils';
 
 // ─── Email / App config ───────────────────────────────────────────────────────
 function getResend() {
@@ -350,8 +351,7 @@ export async function POST(req: NextRequest) {
         const ticketsToCreate = [];
         const initials = name.substring(0, 2).toUpperCase().padEnd(2, 'X');
         for (let i = 0; i < qty; i++) {
-          const randomStr = Math.random().toString(36).substring(2, 8).toUpperCase();
-          const ticketCode = `UP-${initials}-${randomStr}`;
+          const ticketCode = generateTicketCode(initials);
           ticketsToCreate.push({
             reservation_id: insertData.id,
             event_id: eventId,

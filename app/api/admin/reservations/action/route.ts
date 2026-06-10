@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { getSupabaseAdmin } from '@/utils/supabase/admin';
+import { generateTicketCode } from '@/lib/ticketUtils';
 
 function getResend() {
   return new Resend(process.env.RESEND_API_KEY || 're_dummy_key');
@@ -34,8 +35,7 @@ export async function POST(req: NextRequest) {
       const ticketsToCreate = [];
       const initials = reservation.full_name.substring(0, 2).toUpperCase().padEnd(2, 'X');
       for (let i = 0; i < reservation.quantity; i++) {
-        const randomStr = Math.random().toString(36).substring(2, 8).toUpperCase();
-        const ticketCode = `UP-${initials}-${randomStr}`;
+        const ticketCode = generateTicketCode(initials);
         ticketsToCreate.push({
           reservation_id: reservation.id,
           event_id: reservation.event_id,
