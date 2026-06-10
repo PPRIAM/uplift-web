@@ -93,11 +93,19 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
 
   // 4. Extract unique speakers
   const spksMap = new Map();
-  sessions?.forEach(s => {
-    s.session_speakers?.forEach((ss: any) => {
-      if (ss.speakers) spksMap.set(ss.speakers.id, ss.speakers);
-    });
-  });
+  if (sessions) {
+    for (let i = 0; i < sessions.length; i++) {
+      const s = sessions[i];
+      if (s.session_speakers) {
+        for (let j = 0; j < s.session_speakers.length; j++) {
+          const ss = s.session_speakers[j];
+          if (ss.speakers) {
+            spksMap.set(ss.speakers.id, ss.speakers);
+          }
+        }
+      }
+    }
+  }
   const speakers = Array.from(spksMap.values());
 
   return (
