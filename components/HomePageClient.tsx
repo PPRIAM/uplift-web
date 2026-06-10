@@ -56,6 +56,7 @@ interface HomePageClientProps {
   totalEvents: number | null;
   totalSpeakers: number | null;
   featuredEvent: FeaturedEvent | null;
+  eventSessions?: any[] | null;
 }
 
 /**
@@ -68,6 +69,7 @@ export default function HomePageClient({
   featuredSpeakers,
   totalEvents,
   featuredEvent,
+  eventSessions,
 }: HomePageClientProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -98,37 +100,52 @@ export default function HomePageClient({
     return () => ctx.revert();
   }, []);
 
-  // Définition des valeurs de repli (fallbacks) pour l'événement vedette UPLIFT 2.0
-  const fallbackEventId = featuredEvent?.id || 'a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d';
-  const organizerName = featuredEvent?.organizer || 'AYIBUZZ MEDIA × UCLUB';
-  const cityName = featuredEvent?.city || 'Gonaïves, Haïti';
-  const eventName = featuredEvent?.name || 'UPLIFT 2.0';
-  const eventDescription = featuredEvent?.description || "Unir et structurer l'énergie professionnelle pour propulser le développement local. Rejoignez l'élan d'UPLIFT 2.0.";
-  const eventDateText = featuredEvent?.date_time ? formatDate(featuredEvent.date_time) : '25 avril 2026 · 14:00';
-  const locationName = featuredEvent?.location_name || "Centre d'accueil Salve Regina, Gonaïves";
-  const inscritsCount = featuredEvent?.registered_count ?? 400;
-  const totalSpots = featuredEvent?.capacity ?? 400;
+  // Définition des valeurs pour l'événement vedette UPLIFT 2.0, ou Ayibuzz Media si null
+  const isAyibuzzMedia = !featuredEvent;
+  const fallbackEventId = featuredEvent?.id || '';
+  const organizerName = featuredEvent?.organizer || (isAyibuzzMedia ? 'Agence' : 'AYIBUZZ MEDIA × UCLUB');
+  const cityName = featuredEvent?.city || (isAyibuzzMedia ? 'Port-au-Prince, Haïti' : 'Gonaïves, Haïti');
+  const eventName = featuredEvent?.name || (isAyibuzzMedia ? 'AYIBUZZ MEDIA' : 'UPLIFT 2.0');
+  const eventDescription = featuredEvent?.description || (isAyibuzzMedia ? "Ayibuzz Media est une agence de communication et de médias axée sur la promotion des initiatives positives en Haïti. Nous créons du contenu engageant et des événements marquants pour inspirer la jeunesse." : "Unir et structurer l'énergie professionnelle pour propulser le développement local. Rejoignez l'élan d'UPLIFT 2.0.");
+  const eventDateText = featuredEvent?.date_time ? formatDate(featuredEvent.date_time) : '';
+  const locationName = featuredEvent?.location_name || '';
+  const inscritsCount = featuredEvent?.registered_count ?? 0;
+  const totalSpots = featuredEvent?.capacity ?? 0;
   const placesRestantes = featuredEvent ? Math.max(0, totalSpots - inscritsCount) : 0;
-  const tagline = featuredEvent?.tagline || 'Leve ansanm, Briye ansanm';
+  const tagline = featuredEvent?.tagline || (isAyibuzzMedia ? 'Inspirer. Créer. Connecter.' : 'Leve ansanm, Briye ansanm');
 
   // Transformation des données brutes de sessions provenant de Supabase en objets UI (ou fallback)
-  const activeSessions = upcomingEvents && upcomingEvents.length > 0 
-    ? upcomingEvents.slice(0, 3).map((ev, idx) => ({
-        id: ev.id,
-        type: ev.type || (idx === 0 ? 'Conférence' : 'Atelier'),
-        name: ev.name,
-        description: ev.description || (idx === 0 ? 'Conférence principale' : 'Atelier pratique'),
-        speaker: {
-          name: ev.speaker_name || (idx === 0 ? 'Stéphanie Sophie LOUIS' : idx === 1 ? 'Joacina ORIVAL' : 'Wilnise JACQUES'),
-          role: ev.speaker_role || (idx === 0 ? "Présidente du gouvernement Jeunesse d'Haïti" : idx === 1 ? 'Étudiante finissante en sociologie' : 'Avocate & Maîtresse de cérémonie'),
-          image: ev.speaker_image || (idx === 0 ? '/images/speakers/stephanie.jpg' : idx === 1 ? '/images/speakers/joacina.jpg' : '/images/speakers/wilnise.jpg')
-        }
-      }))
+  const activeSessions = eventSessions && eventSessions.length > 0
+    ? eventSessions.map((ev, idx) => {
+        const sp = ev.session_speakers && ev.session_speakers.length > 0 && ev.session_speakers[0].speakers
+          ? ev.session_speakers[0].speakers
+          : null;
+        return {
+          id: ev.id,
+          type: ev.type || (idx === 0 ? 'Conférence' : 'Atelier'),
+          name: ev.title || ev.name,
+          description: ev.description || (idx === 0 ? 'Conférence principale' : 'Atelier pratique'),
+          speaker: {
+            name: sp ? sp.full_name : (idx === 0 ? 'Stéphanie Sophie LOUIS' : idx === 1 ? 'Joacina ORIVAL' : 'Wilnise JACQUES'),
+            role: sp ? sp.role : (idx === 0 ? "Présidente du gouvernement Jeunesse d'Haïti" : idx === 1 ? 'Étudiante finissante en sociologie' : 'Avocate & Maîtresse de cérémonie'),
+            image: sp && sp.profile_image ? sp.profile_image : (idx === 0 ? '/images/speakers/stephanie.jpg' : idx === 1 ? '/images/speakers/joacina.jpg' : '/images/speakers/wilnise.jpg')
+          }
+        };
+      })
     : defaultSessions;
 
+  // Extraire les speakers réels du featured event
+  const eventSpeakers = eventSessions && eventSessions.length > 0
+    ? eventSessions
+        .map(ev => ev.session_speakers?.[0]?.speakers)
+        .filter(sp => sp != null)
+    : [];
+
   // Transformation des intervenantes provenant de Supabase en objets UI (ou fallback)
-  const activeSpeakers = featuredSpeakers && featuredSpeakers.length > 0
-    ? featuredSpeakers.slice(0, 3).map((sp) => ({
+  const actualSpeakersToDisplay = eventSpeakers.length > 0 ? eventSpeakers : featuredSpeakers;
+
+  const activeSpeakers = actualSpeakersToDisplay && actualSpeakersToDisplay.length > 0
+    ? actualSpeakersToDisplay.slice(0, 3).map((sp) => ({
         id: sp.id,
         name: sp.full_name,
         role: sp.role || 'Intervenante',
@@ -151,6 +168,7 @@ export default function HomePageClient({
         locationName={locationName}
         inscritsCount={inscritsCount}
         placesRestantes={placesRestantes}
+        isAyibuzzMedia={isAyibuzzMedia}
       />
 
       {/* 2. SECTION STATS BAR */}

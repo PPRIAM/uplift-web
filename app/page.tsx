@@ -15,7 +15,7 @@ export default async function HomePage() {
     .order('date_time', { ascending: true })
     .limit(3);
 
-  // Fetch featured event (single featured, or fallback to next upcoming)
+  // Fetch featured event
   const { data: featuredEvents } = await supabase
     .from('events')
     .select('id, name, tagline, description, date_time, end_date_time, location_name, city, registered_count, capacity, cover_image, is_featured')
@@ -23,12 +23,34 @@ export default async function HomePage() {
     .eq('is_featured', true)
     .limit(1);
 
-  const featuredEventData = featuredEvents && featuredEvents.length > 0 ? featuredEvents[0] : null;
+  const featuredEvent = featuredEvents && featuredEvents.length > 0 ? featuredEvents[0] : null;
 
-  // Fallback: if no featured event, use the nearest upcoming event
-  const featuredEvent = featuredEventData || (upcomingEvents && upcomingEvents.length > 0 ? upcomingEvents[0] : null);
+  let eventSessions = null;
+  if (featuredEvent) {
+    const { data: sessions } = await supabase
+      .from('sessions')
+      .select(`
+        id,
+        title,
+        description,
+        type,
+        start_time,
+        session_speakers (
+          speakers (
+            id,
+            full_name,
+            role,
+            profile_image
+          )
+        )
+      `)
+      .eq('event_id', featuredEvent.id)
+      .order('start_time', { ascending: true })
+      .limit(3);
+    eventSessions = sessions;
+  }
 
-  // Fetch featured speakers
+  // Fetch featured speakers (general site speakers)
   const { data: featuredSpeakers } = await supabase
     .from('speakers')
     .select('id, full_name, role, bio, profile_image, published')
@@ -55,6 +77,7 @@ export default async function HomePage() {
       totalEvents={totalEvents}
       totalSpeakers={totalSpeakers}
       featuredEvent={featuredEvent}
+      eventSessions={eventSessions}
     />
   );
 }
