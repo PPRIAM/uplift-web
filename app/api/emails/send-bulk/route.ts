@@ -35,15 +35,14 @@ function stripHtml(html: string): string {
 }
 
 // Personalization token replacement
+const TOKEN_REGEX = /\{\{([^}]+)\}\}/g;
 function replaceTokens(
   html: string,
   tokens: Record<string, string>
 ): string {
-  let result = html;
-  for (const [key, value] of Object.entries(tokens)) {
-    result = result.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), value || '');
-  }
-  return result;
+  return html.replace(TOKEN_REGEX, (match, key) => {
+    return key in tokens ? (tokens[key] || '') : match;
+  });
 }
 
 // Small delay helper
