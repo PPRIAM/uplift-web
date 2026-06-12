@@ -32,8 +32,7 @@ export default function CtaBanner({ fallbackEventId, hasFeaturedEvent }: CtaBann
               {hasFeaturedEvent ? "Leve ansanm, Briye ansanm" : "Rejoignez la communauté"}
             </h2>
             
-            {/* Description */}
-            <p className="text-slate-200 text-base mb-8 leading-relaxed max-w-md">
+            <p className="text-slate-200 text-base mb-8 leading-relaxed">
               {hasFeaturedEvent ? (
                 <>
                   25 avril • Centre d&apos;accueil Salve Regina • Gonaïves<br />

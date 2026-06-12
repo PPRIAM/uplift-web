@@ -44,14 +44,14 @@ export default function HeroSection({
           {/* Bloc de gauche : Contenu textuel et actions (7 colonnes) */}
           <div className="lg:col-span-7 flex flex-col items-start text-left">
             
-            {/* Badge de l'organisateur et de la ville */}
+            {/* Badge de l'organisateur et de la ville 
             <div className="animate-fade-in-up inline-flex items-center gap-2 bg-[#0E1AD4]/10 border border-[#0E1AD4]/20 rounded-full py-1.5 px-4 mb-6">
               <div className="w-2 h-2 rounded-full bg-[#0E1AD4] animate-pulse-glow"></div>
               <span className="text-[11px] font-bold tracking-widest uppercase text-[#0E1AD4] font-body">
                 {isAyibuzzMedia ? "Uplift Platform" : `${organizerName} • ${cityName}`}
               </span>
             </div>
-
+            */}
             {/* Titre héroïque principal en font-display de l'Agent 2 */}
             <h1 className="font-display animate-fade-in-up animate-delay-100 text-[clamp(42px,5vw,72px)] font-black text-[#0F172A] tracking-[-0.03em] leading-[0.95] mb-4 uppercase">
               {isAyibuzzMedia ? "Leve ansanm, Briye ansanm" : eventName}

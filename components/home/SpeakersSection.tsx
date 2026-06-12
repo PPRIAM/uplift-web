@@ -29,7 +29,7 @@ export default function SpeakersSection({ activeSpeakers, hasFeaturedEvent, fall
           <h2 className="font-heading text-[clamp(32px,4vw,44px)] font-bold tracking-tight text-[#0F172A]">
             {hasFeaturedEvent ? "Intervenants" : "Intervenants Passés"}
           </h2>
-          <p className="text-[#64748B] text-base mt-3 max-w-md mx-auto leading-relaxed">
+          <p className="text-[#64748B] text-base mt-3 mx-auto leading-relaxed">
             Des personnalités inspirantes qui partagent leur expertise et leur vision pour Haïti.
           </p>
         </div>
