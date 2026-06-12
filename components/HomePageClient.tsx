@@ -45,6 +45,7 @@ interface FeaturedEvent {
   city?: string;
   date_time?: string;
   location_name?: string;
+  location_details?: string | null;
   registered_count?: number;
   capacity?: number;
   tagline?: string;
@@ -114,6 +115,16 @@ export default function HomePageClient({
   const placesRestantes = featuredEvent ? Math.max(0, totalSpots - inscritsCount) : 0;
   const tagline = featuredEvent?.tagline || (isAyibuzzMedia ? 'Inspirer. Créer. Connecter.' : 'Leve ansanm, Briye ansanm');
 
+  // Deserialize metadata from location_details if available
+  let eventMetadata = null;
+  if (featuredEvent?.location_details) {
+    try {
+      eventMetadata = JSON.parse(featuredEvent.location_details);
+    } catch (e) {
+      // ignore parsing error
+    }
+  }
+
   // Transformation des données brutes de sessions provenant de Supabase en objets UI (ou fallback)
   const activeSessions = eventSessions && eventSessions.length > 0
     ? eventSessions.map((ev, idx) => {
@@ -172,23 +183,24 @@ export default function HomePageClient({
       />
 
       {/* 2. SECTION STATS BAR */}
-      <StatsBar totalEvents={totalEvents} />
+      <StatsBar totalEvents={totalEvents} featuredEvent={featuredEvent} />
 
       {/* 3. SECTION SESSIONS */}
       <SessionsSection 
         tagline={tagline}
         activeSessions={activeSessions}
         fallbackEventId={fallbackEventId}
+        hasFeaturedEvent={!!featuredEvent}
       />
 
       {/* 4. SECTION INTERVENANTS (SPEAKERS) */}
-      <SpeakersSection activeSpeakers={activeSpeakers} />
+      <SpeakersSection activeSpeakers={activeSpeakers} hasFeaturedEvent={!!featuredEvent} fallbackEventId={fallbackEventId} />
 
       {/* 5. SECTION BENTO GRID "POURQUOI UPLIFT" */}
-      <WhyUpliftSection />
+      <WhyUpliftSection hasFeaturedEvent={!!featuredEvent} eventMetadata={eventMetadata} />
 
       {/* 6. BANNIÈRE D'APPEL À L'ACTION (CTA) */}
-      <CtaBanner fallbackEventId={fallbackEventId} />
+      <CtaBanner fallbackEventId={fallbackEventId} hasFeaturedEvent={!!featuredEvent} />
 
     </div>
   );

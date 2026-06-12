@@ -5,10 +5,11 @@ import { ArrowRight } from 'lucide-react';
 
 interface CtaBannerProps {
   fallbackEventId: string;
+  hasFeaturedEvent: boolean;
 }
 
 // Composant CtaBanner UPLIFT 2.0 - Bannière d'appel à l'action de fin de page
-export default function CtaBanner({ fallbackEventId }: CtaBannerProps) {
+export default function CtaBanner({ fallbackEventId, hasFeaturedEvent }: CtaBannerProps) {
   return (
     <section className="py-24 px-6 bg-[#F8FAFC] border-t-[1.5px] border-[#0F172A]">
       <div className="max-w-[800px] mx-auto text-center font-body">
@@ -28,21 +29,29 @@ export default function CtaBanner({ fallbackEventId }: CtaBannerProps) {
           <div className="relative z-10 flex flex-col items-center">
             {/* Titre de la bannière CTA */}
             <h2 className="font-heading text-[clamp(28px,4vw,44px)] font-bold text-white mb-4 tracking-tight uppercase">
-              Leve ansanm, Briye ansanm
+              {hasFeaturedEvent ? "Leve ansanm, Briye ansanm" : "Rejoignez la communauté"}
             </h2>
             
             {/* Description */}
             <p className="text-slate-200 text-base mb-8 leading-relaxed max-w-md">
-              25 avril • Centre d&apos;accueil Salve Regina • Gonaïves<br />
-              Inscription gratuite — Places limitées
+              {hasFeaturedEvent ? (
+                <>
+                  25 avril • Centre d&apos;accueil Salve Regina • Gonaïves<br />
+                  Inscription gratuite — Places limitées
+                </>
+              ) : (
+                <>
+                  Créez un compte pour découvrir les futurs événements et participer à nos initiatives.
+                </>
+              )}
             </p>
             
             {/* Bouton de réservation (Blanc avec texte Bleu Cobalt pour les surfaces sombres) */}
             <Link 
               className="inline-flex items-center gap-2 bg-white text-[#0E1AD4] border-[1.5px] border-[#0F172A] rounded-[12px] py-3.5 px-8 text-sm font-bold no-underline transition-all duration-200 hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[5px_5px_0px_#0F172A] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_#0F172A] shadow-[3px_3px_0px_#0F172A]" 
-              href={`/events/${fallbackEventId}`}
+              href={hasFeaturedEvent ? `/events/${fallbackEventId}` : "/auth/login"}
             >
-              Réserver ma place 
+              {hasFeaturedEvent ? "Réserver ma place" : "Créer un compte"}
               <ArrowRight size={16} />
             </Link>
           </div>

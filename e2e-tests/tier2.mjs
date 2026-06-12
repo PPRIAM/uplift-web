@@ -504,8 +504,8 @@ export const tests = {
     try {
       await page.goto(APP_URL, { waitUntil: 'networkidle2' });
       
-      // Nav to about page
-      await page.click('a[href="/about"]');
+      // Nav to events page
+      await page.click('a[href="/events"]');
       await page.waitForNavigation({ waitUntil: 'networkidle2' });
 
       // Seed live event in DB
@@ -549,7 +549,7 @@ export const tests = {
 
       await page.goto(APP_URL, { waitUntil: 'networkidle2' });
       // Navbar should exist, logo should exist, live tab should be absent
-      const hasLogo = await page.$('img[alt*="Ayibuzz"]') !== null;
+      const hasLogo = await page.$('img[alt*="UPLIFT"]') !== null;
       const hasLive = await page.$('a[href="/live"]') !== null;
 
       if (!hasLogo) {

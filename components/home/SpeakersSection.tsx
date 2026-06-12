@@ -13,19 +13,21 @@ interface Speaker {
 
 interface SpeakersSectionProps {
   activeSpeakers: Speaker[];
+  hasFeaturedEvent: boolean;
+  fallbackEventId: string;
 }
 
 // Section des Intervenants UPLIFT 2.0 - Présentation avec cartes alternées et design asymétrique
-export default function SpeakersSection({ activeSpeakers }: SpeakersSectionProps) {
+export default function SpeakersSection({ activeSpeakers, hasFeaturedEvent, fallbackEventId }: SpeakersSectionProps) {
   return (
     <section className="py-24 px-6 bg-[#F8FAFC] border-t-[1.5px] border-[#0F172A]">
       <div className="max-w-[1200px] mx-auto xl:pl-24 font-body">
         
         {/* En-tête de section */}
         <div className="text-center mb-16">
-          <div className="badge badge-primary inline-flex mb-3">Intervenants</div>
+          <div className="badge badge-primary inline-flex mb-3">{hasFeaturedEvent ? "Nos voix" : "Intervenants"}</div>
           <h2 className="font-heading text-[clamp(32px,4vw,44px)] font-bold tracking-tight text-[#0F172A]">
-            Voix engagées
+            {hasFeaturedEvent ? "Intervenants" : "Intervenants Passés"}
           </h2>
           <p className="text-[#64748B] text-base mt-3 max-w-md mx-auto leading-relaxed">
             Des personnalités inspirantes qui partagent leur expertise et leur vision pour Haïti.
@@ -91,15 +93,17 @@ export default function SpeakersSection({ activeSpeakers }: SpeakersSectionProps
         </div>
 
         {/* Bouton d'action pour voir l'ensemble des intervenants */}
-        <div className="text-center mt-12">
-          <Link 
-            className="btn-secondary no-underline text-sm py-3.5 px-8 inline-flex items-center gap-2" 
-            href="/speakers"
-          >
-            Voir tous les intervenants 
-            <ChevronRight size={14} />
-          </Link>
-        </div>
+        {activeSpeakers.length > 3 || !hasFeaturedEvent ? (
+          <div className="text-center mt-12">
+            <Link
+              className="btn-secondary no-underline text-sm py-3.5 px-8 inline-flex items-center gap-2"
+              href={hasFeaturedEvent ? `/events/${fallbackEventId}` : "/speakers"}
+            >
+              {hasFeaturedEvent ? "Voir Plus" : "Tous les intervenants passés"}
+              <ChevronRight size={14} />
+            </Link>
+          </div>
+        ) : null}
 
       </div>
     </section>

@@ -16,18 +16,22 @@ export default async function HomePage() {
     .limit(3);
 
   // Fetch featured event
-  const { data: featuredEvents } = await supabase
+  const { data: featuredEvents, error: featuredErr } = await supabase
     .from('events')
-    .select('id, name, tagline, description, date_time, end_date_time, location_name, city, registered_count, capacity, cover_image, is_featured')
+    .select('id, name, tagline, description, date_time, end_date_time, location_name, location_details, city, registered_count, capacity, cover_image, is_featured')
     .eq('published', true)
     .eq('is_featured', true)
     .limit(1);
+
+  if (featuredErr) {
+    console.error('Error fetching featured event:', featuredErr);
+  }
 
   const featuredEvent = featuredEvents && featuredEvents.length > 0 ? featuredEvents[0] : null;
 
   let eventSessions = null;
   if (featuredEvent) {
-    const { data: sessions } = await supabase
+    const { data: sessions, error: sessionsErr } = await supabase
       .from('sessions')
       .select(`
         id,
@@ -46,7 +50,11 @@ export default async function HomePage() {
       `)
       .eq('event_id', featuredEvent.id)
       .order('start_time', { ascending: true })
-      .limit(3);
+      .limit(20);
+
+    if (sessionsErr) {
+      console.error('Error fetching sessions:', sessionsErr);
+    }
     eventSessions = sessions;
   }
 

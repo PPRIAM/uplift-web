@@ -22,6 +22,7 @@ interface SessionsSectionProps {
   tagline: string;
   activeSessions: Session[];
   fallbackEventId: string;
+  hasFeaturedEvent: boolean;
 }
 
 // Section des Sessions UPLIFT 2.0 - Présentation du programme avec cartes alternées asymétriques
@@ -29,7 +30,34 @@ export default function SessionsSection({
   tagline,
   activeSessions,
   fallbackEventId,
+  hasFeaturedEvent,
 }: SessionsSectionProps) {
+  if (!hasFeaturedEvent) {
+    return (
+      <section className="py-24 px-6 max-w-[1200px] mx-auto xl:pl-24 font-body">
+        <div className="text-center mb-16">
+          <div className="badge badge-primary inline-flex mb-3">About Uplift</div>
+          <h2 className="font-heading text-[clamp(32px,4vw,44px)] font-bold tracking-tight text-[#0F172A]">
+            Mission & Vision
+          </h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="card">
+            <h3 className="text-xl font-bold font-heading mb-4">Notre Mission</h3>
+            <p className="text-[#64748B] leading-relaxed">
+              Connecter, inspirer et propulser la nouvelle génération haïtienne à travers des événements et du contenu à forte valeur ajoutée.
+            </p>
+          </div>
+          <div className="card card-dark">
+            <h3 className="text-xl font-bold font-heading mb-4 text-white">Impact Communautaire</h3>
+            <p className="text-slate-300 leading-relaxed">
+              Créer des espaces sûrs d&apos;apprentissage et de partage où les idées se transforment en actions tangibles pour l&apos;avenir.
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
   return (
     <section className="py-24 px-6 max-w-[1200px] mx-auto xl:pl-24 font-body">
       

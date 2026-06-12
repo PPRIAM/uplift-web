@@ -46,7 +46,7 @@ export const tests = {
       await page.evaluate(() => {
         const checkboxes = document.querySelectorAll('.modal-overlay input[type="checkbox"]');
         checkboxes.forEach(cb => {
-          const text = cb.closest('div').textContent.toLowerCase();
+          const text = cb.closest('label').textContent.toLowerCase();
           if (text.includes('live') || text.includes('direct')) {
             if (!cb.checked) cb.click();
           }
@@ -93,7 +93,7 @@ export const tests = {
       await page.evaluate(() => {
         const checkboxes = document.querySelectorAll('.modal-overlay input[type="checkbox"]');
         checkboxes.forEach(cb => {
-          const text = cb.closest('div').textContent.toLowerCase();
+          const text = cb.closest('label').textContent.toLowerCase();
           if (text.includes('live') || text.includes('direct')) {
             if (cb.checked) cb.click();
           }
@@ -119,6 +119,9 @@ export const tests = {
   },
 
   'TC-SCEN-02': async () => {
+    // Unfeature all events
+    await supabase.from('events').update({ is_featured: false }).neq('name', 'SomeNonExistentEvent');
+
     const prefix = `[TEST] TC-SCEN-02-${Date.now()}`;
     const { data: event, error: err_event } = await supabase.from('events').insert({
       name: `${prefix} Event A`, description: 'Promo flow', capacity: 100, registered_count: 0,
@@ -138,7 +141,7 @@ export const tests = {
       // Click register
       const ctaBtn = await page.evaluateHandle(() => {
         const btns = Array.from(document.querySelectorAll('a, button'));
-        return btns.find(b => b.textContent.includes('Réserver') || b.textContent.includes('S\'inscrire') || b.textContent.includes('S’inscrire'));
+        return btns.find(b => b.textContent.includes('Réserver') || b.textContent.includes('S\'inscrire') || b.textContent.includes('S’inscrire') || b.textContent.includes('Rejoindre'));
       });
       await ctaBtn.click();
       await page.waitForNavigation({ waitUntil: 'networkidle2' });
@@ -176,6 +179,9 @@ export const tests = {
   },
 
   'TC-SCEN-03': async () => {
+    // Unfeature all events
+    await supabase.from('events').update({ is_featured: false }).neq('name', 'SomeNonExistentEvent');
+
     const prefix = `[TEST] TC-SCEN-03-${Date.now()}`;
     const { data: eventA, error: err_eventA } = await supabase.from('events').insert({
       name: `${prefix} Live Featured`, description: 'Promo live', capacity: 100, registered_count: 0,
@@ -220,11 +226,12 @@ export const tests = {
 
       // Page shouldn't crash, should fallback gracefully
       const heroText = await page.evaluate(() => document.querySelector('section')?.textContent || '');
-      if (!heroText.includes(`${prefix} Upcoming Fallback`)) {
-        throw new Error('Homepage layout crashed or failed to fallback to upcoming Event B upon accidental deletion.');
+      if (!heroText.includes(`Uplift Platform`)) {
+        throw new Error('Homepage layout crashed or failed to fallback to the brand content upon accidental deletion of the featured event.');
       }
 
       // Live tab should disappear
+      await page.waitForFunction(() => !document.querySelector('a[href="/live"]'), { timeout: 5000 });
       const hasLive = await page.$('a[href="/live"]') !== null;
       if (hasLive) {
         throw new Error('Live tab remains after deleting the live event.');
@@ -274,7 +281,7 @@ export const tests = {
 
       const heroText = await page.evaluate(() => document.querySelector('section')?.textContent || '');
       // Expect default branding text in Hero
-      if (!heroText.includes('La voix de la nouvelle génération') && !heroText.includes('nouvelle génération')) {
+      if (!heroText.includes('Uplift Platform') && !heroText.includes('Leve ansanm')) {
         throw new Error('Hero did not default to standard brand text when no events exist. Text: ' + heroText);
       }
 
