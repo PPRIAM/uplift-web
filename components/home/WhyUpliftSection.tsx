@@ -2,27 +2,56 @@
 
 import { Award, Heart, Globe, TrendingUp } from 'lucide-react';
 
+interface WhyUpliftSectionProps {
+  hasFeaturedEvent: boolean;
+  eventMetadata: any;
+}
+
 // Section "Pourquoi UPLIFT" UPLIFT 2.0 - Présentation des propositions de valeur en grille asymétrique
-export default function WhyUpliftSection() {
+export default function WhyUpliftSection({ hasFeaturedEvent, eventMetadata }: WhyUpliftSectionProps) {
+  if (!hasFeaturedEvent) {
+    return (
+      <section className="py-24 px-6 max-w-[1200px] mx-auto xl:pl-24 font-body">
+        <div className="text-center mb-16">
+          <div className="badge badge-primary inline-flex mb-3">FAQ</div>
+          <h2 className="font-heading text-[clamp(32px,4vw,44px)] font-bold tracking-tight text-[#0F172A]">
+            Questions Fréquentes
+          </h2>
+        </div>
+        <div className="flex flex-col gap-4 max-w-3xl mx-auto">
+          {/* FAQ Placeholder */}
+          <details className="card group cursor-pointer">
+            <summary className="font-bold text-lg font-heading">Comment créer un compte ?</summary>
+            <p className="mt-4 text-[#64748B]">Cliquez sur &quot;Créer un compte&quot; en haut à droite de la page et suivez les instructions.</p>
+          </details>
+          <details className="card group cursor-pointer">
+            <summary className="font-bold text-lg font-heading">Comment participer aux événements ?</summary>
+            <p className="mt-4 text-[#64748B]">Inscrivez-vous sur la page de l&apos;événement. Vous recevrez un billet électronique pour accéder à l&apos;événement.</p>
+          </details>
+        </div>
+      </section>
+    );
+  }
+
   const assets = [
     {
       icon: Award,
-      title: 'Conférences de haut niveau',
+      title: eventMetadata?.benefits || 'Bénéfices',
       description: 'Des intervenants engagés qui partagent des perspectives réelles sur les défis de la jeunesse haïtienne.',
     },
     {
       icon: Heart,
-      title: 'Ateliers interactifs',
+      title: eventMetadata?.objectives || 'Objectifs',
       description: 'Des espaces de réflexion pratique pour explorer, comprendre et agir dans un contexte de crise.',
     },
     {
       icon: Globe,
-      title: 'Réseau & Communauté',
+      title: eventMetadata?.outcomes || 'Résultats attendus',
       description: 'Connectez-vous avec des jeunes engagés, des leaders en devenir et des professionnels inspirants.',
     },
     {
       icon: TrendingUp,
-      title: 'Gratuit & Accessible',
+      title: eventMetadata?.audience || 'Public cible',
       description: "L'accès à l'inspiration et aux idées ne devrait pas avoir de prix. UPLIFT 2.0 est ouvert à tous.",
     },
   ];
@@ -32,12 +61,12 @@ export default function WhyUpliftSection() {
       
       {/* En-tête de section */}
       <div className="text-center mb-16">
-        <div className="badge badge-primary inline-flex mb-3">Pourquoi UPLIFT ?</div>
+        <div className="badge badge-primary inline-flex mb-3">Pourquoi participer ?</div>
         <h2 className="font-heading text-[clamp(32px,4vw,44px)] font-bold tracking-tight text-[#0F172A]">
-          Plus qu&apos;un événement
+          Why Attend This Event?
         </h2>
         <p className="text-[#64748B] text-base mt-3 max-w-[520px] mx-auto leading-relaxed">
-          UPLIFT 2.0 est un espace structuré de réflexion, d&apos;action et de connexion pour la jeunesse haïtienne.
+          Découvrez les bénéfices et les objectifs de cet événement incontournable.
         </p>
       </div>
 

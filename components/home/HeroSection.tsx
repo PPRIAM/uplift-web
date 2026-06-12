@@ -48,23 +48,23 @@ export default function HeroSection({
             <div className="animate-fade-in-up inline-flex items-center gap-2 bg-[#0E1AD4]/10 border border-[#0E1AD4]/20 rounded-full py-1.5 px-4 mb-6">
               <div className="w-2 h-2 rounded-full bg-[#0E1AD4] animate-pulse-glow"></div>
               <span className="text-[11px] font-bold tracking-widest uppercase text-[#0E1AD4] font-body">
-                {organizerName} • {cityName}
+                {isAyibuzzMedia ? "Uplift Platform" : `${organizerName} • ${cityName}`}
               </span>
             </div>
 
             {/* Titre héroïque principal en font-display de l'Agent 2 */}
             <h1 className="font-display animate-fade-in-up animate-delay-100 text-[clamp(42px,5vw,72px)] font-black text-[#0F172A] tracking-[-0.03em] leading-[0.95] mb-4 uppercase">
-              {eventName}
+              {isAyibuzzMedia ? "Leve ansanm, Briye ansanm" : eventName}
             </h1>
 
             {/* Slogan de l'événement */}
             <p className="animate-fade-in-up animate-delay-200 text-[clamp(18px,2vw,24px)] text-[#334155] mb-6 font-heading font-semibold tracking-tight leading-snug">
-              {tagline}
+              {isAyibuzzMedia ? "Rejoignez la plus grande communauté." : tagline}
             </p>
 
             {/* Manifeste court (limité pour éviter la distraction) */}
             <p className="animate-fade-in-up animate-delay-300 text-base md:text-lg text-[#64748B] leading-relaxed mb-8 max-w-[540px]">
-              {eventDescription}
+              {isAyibuzzMedia ? "Inspirer, Créer, Connecter. Uplift est votre plateforme pour découvrir des événements, apprendre des leaders, et forger l'avenir d'Haïti." : eventDescription}
             </p>
 
             {/* Boutons d'action principaux en cobalt */}
@@ -77,12 +77,20 @@ export default function HeroSection({
                   Rejoindre l&apos;élan
                   <ArrowRight size={16} />
                 </Link>
-              ) : null}
+              ) : (
+                <Link
+                  className="btn-primary no-underline text-sm py-3 px-6 inline-flex items-center gap-2"
+                  href="/auth/login"
+                >
+                  Créer un compte
+                  <ArrowRight size={16} />
+                </Link>
+              )}
               <Link 
                 className="btn-secondary no-underline text-sm py-3 px-6 text-[#0F172A] border-[#0F172A] hover:bg-[#0E1AD4]/5" 
                 href="/events"
               >
-                {isAyibuzzMedia ? "Nos événements" : "En savoir plus"}
+                {isAyibuzzMedia ? "Parcourir les événements passés" : "En savoir plus"}
               </Link>
             </div>
 

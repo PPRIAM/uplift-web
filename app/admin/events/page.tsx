@@ -44,6 +44,7 @@ export default function AdminEventsPage() {
     name: '',
     tagline: '',
     location_name: '',
+    location_details: '',
     city: '',
     date_time: '',
     end_date_time: '',
@@ -52,6 +53,10 @@ export default function AdminEventsPage() {
     cover_image: '' as string,
     is_featured: false,
     is_live: false,
+    metadata_benefits: '',
+    metadata_objectives: '',
+    metadata_outcomes: '',
+    metadata_audience: '',
   });
 
   const fetchEvents = useCallback(async () => {
@@ -125,17 +130,29 @@ export default function AdminEventsPage() {
 
   const openCreate = () => {
     setEditEvent(null);
-    setForm({ name: '', tagline: '', location_name: '', city: '', date_time: '', end_date_time: '', description: '', capacity: 500, cover_image: '', is_featured: false, is_live: false });
+    setForm({ name: '', tagline: '', location_name: '', location_details: '', city: '', date_time: '', end_date_time: '', description: '', capacity: 500, cover_image: '', is_featured: false, is_live: false, metadata_benefits: '', metadata_objectives: '', metadata_outcomes: '', metadata_audience: '' });
     resetCoverState();
     setShowModal(true);
   };
 
   const openEdit = (event: any) => {
     setEditEvent(event);
+
+    let metadata = { benefits: '', objectives: '', outcomes: '', audience: '' };
+    if (event.location_details) {
+      try {
+        const parsed = JSON.parse(event.location_details);
+        metadata = { ...metadata, ...parsed };
+      } catch (e) {
+        // use default empty metadata
+      }
+    }
+
     setForm({
       name: event.name,
       tagline: event.tagline || '',
       location_name: event.location_name || '',
+      location_details: event.location_details || '',
       city: event.city || '',
       date_time: toLocalISOString(event.date_time),
       end_date_time: toLocalISOString(event.end_date_time),
@@ -144,6 +161,10 @@ export default function AdminEventsPage() {
       cover_image: event.cover_image || '',
       is_featured: event.is_featured || false,
       is_live: event.is_live || false,
+      metadata_benefits: metadata.benefits || '',
+      metadata_objectives: metadata.objectives || '',
+      metadata_outcomes: metadata.outcomes || '',
+      metadata_audience: metadata.audience || '',
     });
     resetCoverState();
     setShowModal(true);
@@ -210,8 +231,21 @@ export default function AdminEventsPage() {
       await supabase.from('events').update({ is_featured: false }).eq('is_featured', true);
     }
 
+    const metadataPayload = {
+      benefits: form.metadata_benefits,
+      objectives: form.metadata_objectives,
+      outcomes: form.metadata_outcomes,
+      audience: form.metadata_audience
+    };
+
     const eventData: any = {
-      ...form,
+      name: form.name,
+      tagline: form.tagline,
+      location_name: form.location_name,
+      location_details: JSON.stringify(metadataPayload),
+      city: form.city,
+      description: form.description,
+      capacity: form.capacity,
       cover_image: finalCoverImage,
       is_featured: form.is_featured,
       is_live: form.is_live,
@@ -510,6 +544,26 @@ export default function AdminEventsPage() {
               <div>
                 <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Lieu précis</label>
                 <input type="text" value={form.location_name} onChange={e => setForm({ ...form, location_name: e.target.value })} placeholder="Centre de conférence" className="input-field" />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Bénéfices</label>
+                  <input type="text" value={form.metadata_benefits} onChange={e => setForm({ ...form, metadata_benefits: e.target.value })} placeholder="ex: Networking..." className="input-field" />
+                </div>
+                <div>
+                  <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Objectifs</label>
+                  <input type="text" value={form.metadata_objectives} onChange={e => setForm({ ...form, metadata_objectives: e.target.value })} placeholder="ex: Sensibilisation..." className="input-field" />
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Résultats attendus</label>
+                  <input type="text" value={form.metadata_outcomes} onChange={e => setForm({ ...form, metadata_outcomes: e.target.value })} placeholder="ex: Plan d'action..." className="input-field" />
+                </div>
+                <div>
+                  <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Public cible</label>
+                  <input type="text" value={form.metadata_audience} onChange={e => setForm({ ...form, metadata_audience: e.target.value })} placeholder="ex: Étudiants..." className="input-field" />
+                </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>

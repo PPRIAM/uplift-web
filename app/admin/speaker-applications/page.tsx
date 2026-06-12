@@ -25,7 +25,7 @@ export default function AdminSpeakerApplicationsPage() {
   const fetchApplications = useCallback(async () => {
     setLoading(true);
     const supabase = createClient();
-    let query = supabase.from('speaker_applications').select('*').order('created_at', { ascending: false });
+    const query = supabase.from('speaker_applications').select('*').order('created_at', { ascending: false });
     
     const { data } = await query;
     setApplications(data || []);

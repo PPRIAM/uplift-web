@@ -14,7 +14,7 @@ export function AnimatedCount({ value }: { value: number }) {
       return;
     }
 
-    let start = 0;
+    const start = 0;
     const end = value;
     if (start === end) {
       setCount(end);

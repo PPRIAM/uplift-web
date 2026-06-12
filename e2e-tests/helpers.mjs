@@ -112,7 +112,7 @@ export async function cleanupTestEvents() {
 export async function setupBrowser() {
   const browser = await puppeteer.launch({
     headless: true,
-    executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    executablePath: 'chrome/linux-149.0.7827.55/chrome-linux64/chrome',
     args: ['--no-sandbox', '--disable-setuid-sandbox']
   });
   const page = await browser.newPage();
