@@ -72,3 +72,16 @@ export function generateTicketCode(initials: string): string {
   const randomStr = Math.random().toString(36).substring(2, 8).toUpperCase();
   return `UP-${initials}-${randomStr}`;
 }
+
+/**
+ * Formate le prix d'un billet selon sa devise.
+ */
+export function formatPrice(price: number, currency: string | null | undefined): string {
+  if (price === 0) return 'Gratuit';
+  const curr = currency === 'HTG' ? 'HTG' : 'USD';
+  if (curr === 'HTG') {
+    return `${price.toLocaleString('fr-HT')} HTG`;
+  }
+  return `$${price}`;
+}
+

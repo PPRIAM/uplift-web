@@ -35,6 +35,10 @@ export const tests = {
 
       // Nav to home
       await page.goto(APP_URL, { waitUntil: 'load' });
+      
+      // Wait for React hydration
+      await new Promise(r => setTimeout(r, 2000));
+
       const heroText = await page.evaluate(() => document.querySelector('section')?.textContent || '');
 
       if (!heroText.includes(`${prefix} Event B`)) {
@@ -63,6 +67,10 @@ export const tests = {
     try {
       // Step 1: Nav to home as public user
       await page.goto(APP_URL, { waitUntil: 'load' });
+      
+      // Wait to ensure hydration check runs
+      await new Promise(r => setTimeout(r, 2000));
+      
       let hasLive = await page.$('a[href="/live"]') !== null;
       if (hasLive) throw new Error('Live tab is shown when no event is live.');
 
@@ -85,6 +93,10 @@ export const tests = {
 
       // Step 3: Check navbar
       await page.goto(APP_URL, { waitUntil: 'load' });
+      
+      // Wait for Live link to render via hydration
+      await page.waitForSelector('a[href="/live"]', { timeout: 10000 });
+      
       hasLive = await page.$('a[href="/live"]') !== null;
       if (!hasLive) throw new Error('Live tab did not appear after setting event to live.');
 
@@ -103,6 +115,10 @@ export const tests = {
 
       // Step 5: Check navbar again
       await page.goto(APP_URL, { waitUntil: 'load' });
+      
+      // Wait for Live link to disappear
+      await page.waitForFunction(() => !document.querySelector('a[href="/live"]'), { timeout: 10000 });
+
       hasLive = await page.$('a[href="/live"]') !== null;
       if (hasLive) throw new Error('Live tab is still shown after setting event to unlive.');
     } finally {
@@ -143,6 +159,9 @@ export const tests = {
 
       // Nav to home page
       await page.goto(APP_URL, { waitUntil: 'load' });
+
+      // Wait for Live link to render
+      await page.waitForSelector('a[href="/live"]', { timeout: 10000 });
 
       // Event B showcased in Hero
       const heroText = await page.evaluate(() => document.querySelector('section')?.textContent || '');
@@ -264,6 +283,9 @@ export const tests = {
 
       // Navigate to homepage
       await page.goto(APP_URL, { waitUntil: 'domcontentloaded' });
+
+      // Wait for React hydration
+      await new Promise(r => setTimeout(r, 2000));
 
       // Hero should fallback to upcoming Event B
       const heroText = await page.evaluate(() => document.querySelector('section')?.textContent || '');

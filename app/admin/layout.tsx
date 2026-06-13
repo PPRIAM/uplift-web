@@ -19,6 +19,7 @@ const gestionItems = [
   { href: '/admin/reservations', label: 'Réservations', icon: ClipboardList },
   { href: '/admin/sessions', label: 'Sessions', icon: List },
   { href: '/admin/speakers', label: 'Intervenants', icon: Users },
+  { href: '/admin/speaker-applications', label: 'Candidatures', icon: FileText },
   { href: '/admin/tickets', label: 'Billets', icon: Ticket },
 ];
 

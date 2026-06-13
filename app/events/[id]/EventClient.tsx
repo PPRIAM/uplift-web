@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, UserPlus, Minus, Plus } from 'lucide-react';
-import { calculateTicketStats } from '@/lib/ticketUtils';
+import { calculateTicketStats, formatPrice } from '@/lib/ticketUtils';
 
 interface EventClientProps {
   event:    any;
@@ -82,9 +82,9 @@ export default function EventClient({ event, tickets }: EventClientProps) {
                         <span className="font-bold text-sm text-[var(--text-primary)]">{t.name}</span>
                         <span className="font-extrabold text-[var(--brand-success)]">
                           {t.pricing_tiers && t.pricing_tiers.length > 0 ? (
-                            `À partir de $${Math.min(...t.pricing_tiers.map((tr: any) => tr.price))}`
+                            `À partir de ${formatPrice(Math.min(...t.pricing_tiers.map((tr: any) => tr.price)), t.description)}`
                           ) : (
-                            t.price === 0 ? 'Gratuit' : `$${t.price}`
+                            formatPrice(t.price, t.description)
                           )}
                         </span>
                       </div>
@@ -118,7 +118,7 @@ export default function EventClient({ event, tickets }: EventClientProps) {
                               <div className="flex-1">
                                 <div className="flex justify-between">
                                   <span className="text-xs md:text-sm font-bold text-[var(--text-primary)]">{tr.name}</span>
-                                  <span className="text-xs md:text-sm font-extrabold text-[var(--brand-success)]">${tr.price}</span>
+                                  <span className="text-xs md:text-sm font-extrabold text-[var(--brand-success)]">{formatPrice(tr.price, t.description)}</span>
                                 </div>
                                 {tr.benefits && tr.benefits.length > 0 && (
                                   <ul className="pl-md mt-1.5 text-xs text-[var(--text-muted)] grid gap-xs list-disc">
@@ -144,7 +144,7 @@ export default function EventClient({ event, tickets }: EventClientProps) {
           <div className="flex justify-between mb-sm">
             <span className="text-xs md:text-sm text-[var(--text-muted)]">Prix</span>
             <span className="text-lg font-extrabold text-[var(--brand-success)]">
-              {price === 0 ? 'Gratuit' : `$${price}`}
+              {formatPrice(price, selectedTicketObj?.description)}
             </span>
           </div>
 

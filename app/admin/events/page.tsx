@@ -32,6 +32,8 @@ export default function AdminEventsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editEvent, setEditEvent] = useState<any | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [speakers, setSpeakers] = useState<any[]>([]);
+  const [selectedSpeakers, setSelectedSpeakers] = useState<string[]>([]);
 
   // Cover image state
   const [coverFile, setCoverFile] = useState<File | null>(null);
@@ -70,7 +72,19 @@ export default function AdminEventsPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchEvents(); }, [fetchEvents]);
+  const fetchSpeakers = useCallback(async () => {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from('speakers')
+      .select('id, full_name')
+      .order('full_name');
+    setSpeakers(data || []);
+  }, []);
+
+  useEffect(() => {
+    fetchEvents();
+    fetchSpeakers();
+  }, [fetchEvents, fetchSpeakers]);
 
   const filtered = events.filter(e =>
     e.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -132,10 +146,11 @@ export default function AdminEventsPage() {
     setEditEvent(null);
     setForm({ name: '', tagline: '', location_name: '', location_details: '', city: '', date_time: '', end_date_time: '', description: '', capacity: 500, cover_image: '', is_featured: false, is_live: false, metadata_benefits: '', metadata_objectives: '', metadata_outcomes: '', metadata_audience: '' });
     resetCoverState();
+    setSelectedSpeakers([]);
     setShowModal(true);
   };
 
-  const openEdit = (event: any) => {
+  const openEdit = async (event: any) => {
     setEditEvent(event);
 
     let metadata = { benefits: '', objectives: '', outcomes: '', audience: '' };
@@ -167,6 +182,17 @@ export default function AdminEventsPage() {
       metadata_audience: metadata.audience || '',
     });
     resetCoverState();
+
+    // Fetch associated speakers
+    const supabase = createClient();
+    const { data: assocSpeakers } = await supabase
+      .from('event_speakers')
+      .select('speaker_id')
+      .eq('event_id', event.id);
+
+    const associatedIds = assocSpeakers ? assocSpeakers.map((item: any) => item.speaker_id) : [];
+    setSelectedSpeakers(associatedIds);
+
     setShowModal(true);
   };
 
@@ -277,11 +303,49 @@ export default function AdminEventsPage() {
       return;
     }
 
+    // Automatically create a default ticket for new events
+    if (!editEvent && savedEventId) {
+      const defaultTicket = {
+        event_id: savedEventId,
+        name: 'Standard',
+        price: 0,
+        quantity: eventData.capacity || 500,
+        benefits: ["Accès général à l'événement"],
+        available: true,
+        allocation_mode: 'standard',
+        description: 'USD',
+        pricing_tiers: []
+      };
+      const { error: ticketError } = await supabase.from('tickets').insert([defaultTicket]);
+      if (ticketError) {
+        console.error('Error creating default ticket:', ticketError);
+        alert(`Erreur lors de la création du billet par défaut : ${ticketError.message}`);
+      }
+    }
+
     // Upload cover image AFTER we have the event ID
     if (coverFile && savedEventId) {
       const uploadedUrl = await uploadCoverImage(savedEventId);
       if (uploadedUrl) {
         await supabase.from('events').update({ cover_image: uploadedUrl }).eq('id', savedEventId);
+      }
+    }
+
+    // Sync speakers associations
+    if (savedEventId) {
+      // 1. Delete existing relationships for this event
+      await supabase.from('event_speakers').delete().eq('event_id', savedEventId);
+
+      // 2. Insert new relationships
+      if (selectedSpeakers.length > 0) {
+        const relationData = selectedSpeakers.map(speakerId => ({
+          event_id: savedEventId,
+          speaker_id: speakerId
+        }));
+        const { error: relError } = await supabase.from('event_speakers').insert(relationData);
+        if (relError) {
+          alert(`Erreur d'association des intervenants : ${relError.message}`);
+        }
       }
     }
 
@@ -578,6 +642,43 @@ export default function AdminEventsPage() {
                 <div>
                   <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Fin</label>
                   <input type="datetime-local" value={form.end_date_time} onChange={e => setForm({ ...form, end_date_time: e.target.value })} className="input-field" />
+                </div>
+              </div>
+
+              {/* Speakers selection list */}
+              <div>
+                <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>
+                  Intervenants associés
+                </label>
+                <div style={{
+                  border: '1px solid var(--border-default)',
+                  borderRadius: '10px',
+                  padding: '10px',
+                  maxHeight: '120px',
+                  overflowY: 'auto',
+                  background: 'var(--bg-elevated)'
+                }}>
+                  {speakers.length === 0 ? (
+                    <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Aucun intervenant disponible</p>
+                  ) : (
+                    speakers.map((speaker: any) => (
+                      <label key={speaker.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 0', cursor: 'pointer', fontSize: '13px' }}>
+                        <input
+                          type="checkbox"
+                          checked={selectedSpeakers.includes(speaker.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedSpeakers([...selectedSpeakers, speaker.id]);
+                            } else {
+                              setSelectedSpeakers(selectedSpeakers.filter(id => id !== speaker.id));
+                            }
+                          }}
+                          style={{ accentColor: 'var(--brand-primary)' }}
+                        />
+                        <span style={{ color: 'var(--text-primary)' }}>{speaker.full_name}</span>
+                      </label>
+                    ))
+                  )}
                 </div>
               </div>
 

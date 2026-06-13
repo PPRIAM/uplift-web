@@ -16,6 +16,8 @@ export default function AdminSpeakersPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editSpeaker, setEditSpeaker] = useState<any | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [events, setEvents] = useState<any[]>([]);
+  const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
 
   // Image Upload State
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -39,13 +41,34 @@ export default function AdminSpeakersPage() {
     const supabase = createClient();
     const { data } = await supabase
       .from('speakers')
-      .select('*')
+      .select(`
+        *,
+        event_speakers (
+          event_id,
+          events (
+            id,
+            name
+          )
+        )
+      `)
       .order('full_name');
     setSpeakers(data || []);
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchSpeakers(); }, [fetchSpeakers]);
+  const fetchEvents = useCallback(async () => {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from('events')
+      .select('id, name')
+      .order('name');
+    setEvents(data || []);
+  }, []);
+
+  useEffect(() => {
+    fetchSpeakers();
+    fetchEvents();
+  }, [fetchSpeakers, fetchEvents]);
 
   // Debounce search input
   useEffect(() => {
@@ -69,6 +92,7 @@ export default function AdminSpeakersPage() {
     setEditSpeaker(null);
     setForm({ full_name: '', role: '', company: '', bio: '', profile_image: '', twitter_handle: '', linkedin_url: '', published: false });
     resetImageState();
+    setSelectedEvents([]);
     setShowModal(true);
   };
 
@@ -97,6 +121,11 @@ export default function AdminSpeakersPage() {
       published: s.published ?? true
     });
     resetImageState();
+
+    // Set selected events
+    const assocEvents = s.event_speakers ? s.event_speakers.map((item: any) => item.event_id) : [];
+    setSelectedEvents(assocEvents);
+
     setShowModal(true);
   };
 
@@ -166,6 +195,24 @@ export default function AdminSpeakersPage() {
         await supabase.from('speakers').update({ profile_image: uploadedUrl }).eq('id', savedSpeakerId);
       }
     }
+
+    // Sync events associations
+    if (savedSpeakerId) {
+      // 1. Delete existing relationships for this speaker
+      await supabase.from('event_speakers').delete().eq('speaker_id', savedSpeakerId);
+
+      // 2. Insert new relationships
+      if (selectedEvents.length > 0) {
+        const relationData = selectedEvents.map(eventId => ({
+          speaker_id: savedSpeakerId,
+          event_id: eventId
+        }));
+        const { error: relError } = await supabase.from('event_speakers').insert(relationData);
+        if (relError) {
+          alert(`Erreur d'association des événements : ${relError.message}`);
+        }
+      }
+    }
     
     await fetchSpeakers();
     setShowModal(false);
@@ -225,6 +272,16 @@ export default function AdminSpeakersPage() {
                     <h3 style={{ fontSize: '15px', fontWeight: '700', marginBottom: '2px' }}>{speaker.full_name}</h3>
                     <p style={{ fontSize: '12px', color: 'var(--brand-secondary)' }}>{speaker.role}</p>
                     <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{speaker.company}</p>
+                    {/* Event badges */}
+                    {speaker.event_speakers && speaker.event_speakers.length > 0 && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '6px' }}>
+                        {speaker.event_speakers.map((es: any) => es.events && (
+                          <span key={es.event_id} className="badge badge-primary" style={{ fontSize: '9px', padding: '2px 6px', fontWeight: 'bold' }}>
+                            {es.events.name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '4px' }}>
@@ -316,6 +373,43 @@ export default function AdminSpeakersPage() {
               <div>
                 <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Biographie</label>
                 <textarea value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value })} className="input-field" rows={3} style={{ resize: 'vertical' }} />
+              </div>
+
+              {/* Events selection list */}
+              <div>
+                <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>
+                  Événements associés
+                </label>
+                <div style={{
+                  border: '1px solid var(--border-default)',
+                  borderRadius: '10px',
+                  padding: '10px',
+                  maxHeight: '120px',
+                  overflowY: 'auto',
+                  background: 'var(--bg-elevated)'
+                }}>
+                  {events.length === 0 ? (
+                    <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Aucun événement disponible</p>
+                  ) : (
+                    events.map((event: any) => (
+                      <label key={event.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 0', cursor: 'pointer', fontSize: '13px' }}>
+                        <input
+                          type="checkbox"
+                          checked={selectedEvents.includes(event.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedEvents([...selectedEvents, event.id]);
+                            } else {
+                              setSelectedEvents(selectedEvents.filter(id => id !== event.id));
+                            }
+                          }}
+                          style={{ accentColor: 'var(--brand-primary)' }}
+                        />
+                        <span style={{ color: 'var(--text-primary)' }}>{event.name}</span>
+                      </label>
+                    ))
+                  )}
+                </div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>

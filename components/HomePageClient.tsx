@@ -50,6 +50,8 @@ interface FeaturedEvent {
   capacity?: number;
   tagline?: string;
   is_live?: boolean;
+  cover_image?: string;
+  is_featured?: boolean;
 }
 
 interface HomePageClientProps {
@@ -59,6 +61,7 @@ interface HomePageClientProps {
   totalSpeakers: number | null;
   featuredEvent: FeaturedEvent | null;
   eventSessions?: any[] | null;
+  eventSpeakers?: any[] | null;
 }
 
 /**
@@ -72,6 +75,7 @@ export default function HomePageClient({
   totalEvents,
   featuredEvent,
   eventSessions,
+  eventSpeakers,
 }: HomePageClientProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -127,7 +131,7 @@ export default function HomePageClient({
     }
   }
 
-  // Transformation des données brutes de sessions provenant de Supabase en objets UI (ou fallback)
+  // Transformation des données brutes de sessions provenant de Supabase en objets UI
   const activeSessions = eventSessions && eventSessions.length > 0
     ? eventSessions.map((ev, idx) => {
         const sp = ev.session_speakers && ev.session_speakers.length > 0 && ev.session_speakers[0].speakers
@@ -145,26 +149,21 @@ export default function HomePageClient({
           }
         };
       })
-    : defaultSessions;
-
-  // Extraire les speakers réels du featured event
-  const eventSpeakers = eventSessions && eventSessions.length > 0
-    ? eventSessions
-        .map(ev => ev.session_speakers?.[0]?.speakers)
-        .filter(sp => sp != null)
     : [];
 
-  // Transformation des intervenantes provenant de Supabase en objets UI (ou fallback)
-  const actualSpeakersToDisplay = eventSpeakers.length > 0 ? eventSpeakers : featuredSpeakers;
-
-  const activeSpeakers = actualSpeakersToDisplay && actualSpeakersToDisplay.length > 0
-    ? actualSpeakersToDisplay.slice(0, 3).map((sp) => ({
+  // Transformation des intervenantes provenant de Supabase en objets UI
+  const activeSpeakers = eventSpeakers && eventSpeakers.length > 0
+    ? eventSpeakers.slice(0, 3).map((sp) => ({
         id: sp.id,
         name: sp.full_name,
         role: sp.role || 'Intervenante',
         image: sp.profile_image || '/images/speakers/stephanie.jpg'
       }))
-    : defaultSpeakers;
+    : [];
+
+  // Boolean flags for conditional visibility of sections
+  const showSessionsSection = !!featuredEvent && activeSessions.length > 0;
+  const showSpeakersSection = !!featuredEvent && activeSpeakers.length > 0;
 
   return (
     <div ref={containerRef} className="bg-[var(--bg-base)] text-[var(--text-primary)]">
@@ -183,27 +182,40 @@ export default function HomePageClient({
         placesRestantes={placesRestantes}
         isAyibuzzMedia={isAyibuzzMedia}
         isLive={isLive}
+        coverImage={featuredEvent?.cover_image || ''}
       />
 
       {/* 2. SECTION STATS BAR */}
       <StatsBar totalEvents={totalEvents} featuredEvent={featuredEvent} />
 
       {/* 3. SECTION SESSIONS */}
-      <SessionsSection 
-        tagline={tagline}
-        activeSessions={activeSessions}
-        fallbackEventId={fallbackEventId}
-        hasFeaturedEvent={!!featuredEvent}
-      />
+      {showSessionsSection && (
+        <SessionsSection 
+          tagline={tagline}
+          activeSessions={activeSessions}
+          fallbackEventId={fallbackEventId}
+          hasFeaturedEvent={!!featuredEvent}
+        />
+      )}
 
       {/* 4. SECTION INTERVENANTS (SPEAKERS) */}
-      <SpeakersSection activeSpeakers={activeSpeakers} hasFeaturedEvent={!!featuredEvent} fallbackEventId={fallbackEventId} />
+      {showSpeakersSection && (
+        <SpeakersSection activeSpeakers={activeSpeakers} hasFeaturedEvent={!!featuredEvent} fallbackEventId={fallbackEventId} />
+      )}
 
       {/* 5. SECTION BENTO GRID "POURQUOI UPLIFT" */}
       <WhyUpliftSection hasFeaturedEvent={!!featuredEvent} eventMetadata={eventMetadata} />
 
       {/* 6. BANNIÈRE D'APPEL À L'ACTION (CTA) */}
-      <CtaBanner fallbackEventId={fallbackEventId} hasFeaturedEvent={!!featuredEvent} />
+      <CtaBanner 
+        fallbackEventId={fallbackEventId} 
+        hasFeaturedEvent={!!featuredEvent} 
+        eventName={eventName}
+        eventDateText={eventDateText}
+        locationName={locationName}
+        cityName={cityName}
+        tagline={tagline}
+      />
 
     </div>
   );

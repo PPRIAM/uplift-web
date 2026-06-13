@@ -24,6 +24,7 @@ model Event {
 
   sessions         Session[]
   reservations     Reservation[]
+  event_speakers   EventSpeaker[]
 }
 
 model Session {
@@ -47,6 +48,7 @@ model Speaker {
   profile_image String
 
   sessions      SessionSpeaker[]
+  event_speakers EventSpeaker[]
 }
 
 model SessionSpeaker {
@@ -69,4 +71,16 @@ model Reservation {
   created_at DateTime @default(now())
 
   event      Event    @relation(fields: [event_id], references: [id])
+}
+
+model EventSpeaker {
+  event_id   String
+  speaker_id String
+  created_at DateTime @default(now())
+
+  event      Event    @relation(fields: [event_id], references: [id], onDelete: Cascade)
+  speaker    Speaker  @relation(fields: [speaker_id], references: [id], onDelete: Cascade)
+
+  @@id([event_id, speaker_id])
+  @@map("event_speakers")
 }

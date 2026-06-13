@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { Plus, Edit, Trash2, X, CheckCircle, RefreshCw } from 'lucide-react';
+import { formatPrice } from '@/lib/ticketUtils';
 
 export default function AdminTicketsPage() {
   const [tickets, setTickets] = useState<any[]>([]);
@@ -11,6 +12,9 @@ export default function AdminTicketsPage() {
   const [editTicket, setEditTicket] = useState<any | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [globalError, setGlobalError] = useState<string | null>(null);
+  const [modalError, setModalError] = useState<string | null>(null);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   
   const [form, setForm] = useState({
     event_id: '',
@@ -20,77 +24,116 @@ export default function AdminTicketsPage() {
     benefits: '',
     available: true,
     allocation_mode: 'standard',
-    pricing_tiers: [] as { id: string, name: string, price: number, benefits: string[] }[]
+    pricing_tiers: [] as { id: string, name: string, price: number, benefits: string[] }[],
+    description: 'USD'
   });
+
+  const generateUUID = () => {
+    if (typeof window !== 'undefined' && window.crypto && window.crypto.randomUUID) {
+      return window.crypto.randomUUID();
+    }
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  };
 
   const fetchData = useCallback(async () => {
     setLoading(true);
+    setGlobalError(null);
     const supabase = createClient();
     
-    // Fetch tickets with event names
-    const { data: tktData } = await supabase
-      .from('tickets')
-      .select(`
-        *,
-        events (id, name, capacity)
-      `)
-      .order('created_at', { ascending: false });
-
-    // Fetch LIVE reservation counts per ticket (confirmed only)
-    const { data: reservationCounts } = await supabase
-      .from('reservations')
-      .select('ticket_id, quantity')
-      .eq('status', 'confirmed');
-
-    // Aggregate by ticket_id
-    const soldByTicket: Record<string, number> = {};
-    for (const r of reservationCounts || []) {
-      if (r.ticket_id) {
-        soldByTicket[r.ticket_id] = (soldByTicket[r.ticket_id] || 0) + (r.quantity || 1);
+    try {
+      // Vérifier la session de l'admin
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        window.location.href = '/auth/login';
+        return;
       }
+
+      // Fetch tickets with event names
+      const { data: tktData, error: tktError } = await supabase
+        .from('tickets')
+        .select(`
+          *,
+          events (id, name, capacity)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (tktError) throw tktError;
+
+      // Fetch LIVE reservation counts per ticket (confirmed only)
+      const { data: reservationCounts, error: resError } = await supabase
+        .from('reservations')
+        .select('ticket_id, quantity')
+        .eq('status', 'confirmed');
+
+      if (resError) throw resError;
+
+      // Aggregate by ticket_id
+      const soldByTicket: Record<string, number> = {};
+      for (const r of reservationCounts || []) {
+        if (r.ticket_id) {
+          soldByTicket[r.ticket_id] = (soldByTicket[r.ticket_id] || 0) + (r.quantity || 1);
+        }
+      }
+
+      // Merge live counts into ticket data
+      const merged = (tktData || []).map(t => ({
+        ...t,
+        live_sold: soldByTicket[t.id] || 0,
+      }));
+
+      // Calculate base statistics per event
+      const eventStats: Record<string, { baseSold: number, capacity: number }> = {};
+      merged.forEach(t => {
+        if (!eventStats[t.event_id]) {
+          eventStats[t.event_id] = { baseSold: 0, capacity: t.events?.capacity || 0 };
+        }
+        if (t.allocation_mode !== 'expanded') {
+          eventStats[t.event_id].baseSold += t.live_sold;
+        }
+      });
+
+      // Attach eventStats dynamically
+      const ticketsWithStats = merged.map(t => ({
+        ...t,
+        eventStats: eventStats[t.event_id]
+      }));
+
+      // Fetch events for dropdown
+      const { data: evtData, error: evtError } = await supabase
+        .from('events')
+        .select('id, name')
+        .eq('published', true);
+
+      if (evtError) throw evtError;
+
+      setTickets(ticketsWithStats);
+      setEvents(evtData || []);
+    } catch (err: any) {
+      console.error('Error in fetchData:', err);
+      setGlobalError(`Erreur de chargement : ${err.message || String(err)}`);
+    } finally {
+      setLoading(false);
     }
-
-    // Merge live counts into ticket data
-    const merged = (tktData || []).map(t => ({
-      ...t,
-      live_sold: soldByTicket[t.id] || 0,
-    }));
-
-    // Calculate base statistics per event
-    const eventStats: Record<string, { baseSold: number, capacity: number }> = {};
-    merged.forEach(t => {
-      if (!eventStats[t.event_id]) {
-        eventStats[t.event_id] = { baseSold: 0, capacity: t.events?.capacity || 0 };
-      }
-      if (t.allocation_mode !== 'expanded') {
-        eventStats[t.event_id].baseSold += t.live_sold;
-      }
-    });
-
-    // Attach eventStats dynamically
-    const ticketsWithStats = merged.map(t => ({
-      ...t,
-      eventStats: eventStats[t.event_id]
-    }));
-
-    // Fetch events for dropdown
-    const { data: evtData } = await supabase.from('events').select('id, name').eq('published', true);
-
-    setTickets(ticketsWithStats);
-    setEvents(evtData || []);
-    setLoading(false);
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const openCreate = () => {
     setEditTicket(null);
-    setForm({ event_id: events[0]?.id || '', name: '', price: '0', quantity: '100', benefits: '', available: true, allocation_mode: 'standard', pricing_tiers: [] });
+    setModalError(null);
+    setValidationErrors({});
+    setForm({ event_id: events[0]?.id || '', name: '', price: '0', quantity: '100', benefits: '', available: true, allocation_mode: 'standard', pricing_tiers: [], description: 'USD' });
     setShowModal(true);
   };
 
   const openEdit = (t: any) => {
     setEditTicket(t);
+    setModalError(null);
+    setValidationErrors({});
     setForm({
       event_id: t.event_id,
       name: t.name,
@@ -99,15 +142,41 @@ export default function AdminTicketsPage() {
       benefits: Array.isArray(t.benefits) ? t.benefits.join('\n') : '',
       available: t.available,
       allocation_mode: t.allocation_mode || 'standard',
-      pricing_tiers: t.pricing_tiers || []
+      pricing_tiers: t.pricing_tiers || [],
+      description: t.description || 'USD'
     });
     setShowModal(true);
   };
 
   const handleSave = async () => {
-    if (!form.name.trim() || !form.event_id) return;
+    setModalError(null);
+    const errors: Record<string, string> = {};
+    if (!form.name.trim()) {
+      errors.name = 'Le nom du billet est requis.';
+    }
+    if (!form.event_id) {
+      errors.event_id = 'Veuillez sélectionner un événement.';
+    }
+    
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      return;
+    }
+    setValidationErrors({});
+    
     setActionLoading('save');
     const supabase = createClient();
+
+    // Verify session again before saving
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      setModalError("Votre session a expiré. Veuillez vous reconnecter.");
+      setActionLoading(null);
+      setTimeout(() => {
+        window.location.href = '/auth/login';
+      }, 2000);
+      return;
+    }
 
     const ticketData = {
       event_id: form.event_id,
@@ -117,13 +186,22 @@ export default function AdminTicketsPage() {
       benefits: form.benefits.split('\n').filter(b => b.trim() !== ''),
       available: form.available,
       allocation_mode: form.allocation_mode,
-      pricing_tiers: form.pricing_tiers
+      pricing_tiers: form.pricing_tiers,
+      description: form.description
     };
 
+    let result;
     if (editTicket) {
-      await supabase.from('tickets').update(ticketData).eq('id', editTicket.id);
+      result = await supabase.from('tickets').update(ticketData).eq('id', editTicket.id);
     } else {
-      await supabase.from('tickets').insert([ticketData]);
+      result = await supabase.from('tickets').insert([ticketData]);
+    }
+
+    if (result.error) {
+      console.error('Error saving ticket:', result.error);
+      setModalError(`Erreur de base de données : ${result.error.message}`);
+      setActionLoading(null);
+      return;
     }
 
     await fetchData();
@@ -133,8 +211,18 @@ export default function AdminTicketsPage() {
 
   const handleDelete = async (id: string) => {
     setActionLoading(id);
+    setGlobalError(null);
     const supabase = createClient();
-    await supabase.from('tickets').delete().eq('id', id);
+    
+    const { error } = await supabase.from('tickets').delete().eq('id', id);
+    if (error) {
+      console.error('Error deleting ticket:', error);
+      setGlobalError(`Impossible de supprimer le billet : ${error.message}`);
+      setDeleteId(null);
+      setActionLoading(null);
+      return;
+    }
+
     setTickets(prev => prev.filter(t => t.id !== id));
     setDeleteId(null);
     setActionLoading(null);
@@ -143,7 +231,7 @@ export default function AdminTicketsPage() {
   const addTier = () => {
     setForm(prev => ({
       ...prev,
-      pricing_tiers: [...prev.pricing_tiers, { id: crypto.randomUUID(), name: '', price: 0, benefits: [] }]
+      pricing_tiers: [...prev.pricing_tiers, { id: generateUUID(), name: '', price: 0, benefits: [] }]
     }));
   };
 
@@ -177,6 +265,13 @@ export default function AdminTicketsPage() {
           </button>
         </div>
       </div>
+
+      {globalError && (
+        <div className="card" style={{ border: '1px solid var(--brand-danger)', background: 'rgba(220,38,38,0.05)', color: 'var(--brand-danger)', padding: '16px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px', borderRadius: '12px' }}>
+          <div style={{ flex: 1, fontSize: '14px', fontWeight: '500' }}>{globalError}</div>
+          <button onClick={fetchData} className="btn-secondary" style={{ padding: '6px 12px', fontSize: '12px' }}>Réessayer</button>
+        </div>
+      )}
 
       <div className="stat-card" style={{ padding: 0, overflow: 'hidden' }}>
         {loading ? (
@@ -230,9 +325,11 @@ export default function AdminTicketsPage() {
                       </td>
                       <td style={{ fontSize: '14px', fontWeight: '700' }}>
                         {ticket.pricing_tiers && ticket.pricing_tiers.length > 0 ? (
-                          <span>Plusieurs prix ({ticket.pricing_tiers.length})</span>
+                          <span>
+                            À partir de {formatPrice(Math.min(...ticket.pricing_tiers.map((tr: any) => tr.price)), ticket.description)}
+                          </span>
                         ) : (
-                          ticket.price === 0 ? 'GRATUIT' : `$${ticket.price}`
+                          formatPrice(ticket.price, ticket.description)
                         )}
                       </td>
                       <td>
@@ -279,22 +376,93 @@ export default function AdminTicketsPage() {
               <h2 className="font-display" style={{ fontSize: '20px', fontWeight: '800' }}>{editTicket ? 'Modifier le billet' : 'Nouveau type de billet'}</h2>
               <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><X size={20} /></button>
             </div>
+            
+            {modalError && (
+              <div className="card" style={{ border: '1px solid var(--brand-danger)', background: 'rgba(220,38,38,0.05)', color: 'var(--brand-danger)', padding: '12px', fontSize: '13px', borderRadius: '10px', marginBottom: '16px' }}>
+                {modalError}
+              </div>
+            )}
+
             <div style={{ display: 'grid', gap: '14px' }}>
               <div>
                 <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Événement *</label>
-                <select value={form.event_id} onChange={e => setForm({ ...form, event_id: e.target.value })} className="input-field">
+                <select 
+                  value={form.event_id} 
+                  onChange={e => {
+                    setForm({ ...form, event_id: e.target.value });
+                    if (validationErrors.event_id) setValidationErrors(prev => { const n = {...prev}; delete n.event_id; return n; });
+                  }} 
+                  className="input-field"
+                  style={validationErrors.event_id ? { borderColor: 'var(--brand-danger)', borderWidth: '2px' } : {}}
+                >
                   <option value="">Sélectionner un événement...</option>
                   {events.map(ev => <option key={ev.id} value={ev.id}>{ev.name}</option>)}
                 </select>
+                {validationErrors.event_id && (
+                  <p style={{ color: 'var(--brand-danger)', fontSize: '11px', marginTop: '4px' }}>{validationErrors.event_id}</p>
+                )}
               </div>
               <div>
                 <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Nom du billet *</label>
-                <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Ex: Pass VIP" className="input-field" />
+                <input 
+                  type="text" 
+                  value={form.name} 
+                  onChange={e => {
+                    setForm({ ...form, name: e.target.value });
+                    if (validationErrors.name) setValidationErrors(prev => { const n = {...prev}; delete n.name; return n; });
+                  }} 
+                  placeholder="Ex: Pass VIP" 
+                  className="input-field" 
+                  style={validationErrors.name ? { borderColor: 'var(--brand-danger)', borderWidth: '2px' } : {}}
+                />
+                {validationErrors.name && (
+                  <p style={{ color: 'var(--brand-danger)', fontSize: '11px', marginTop: '4px' }}>{validationErrors.name}</p>
+                )}
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.6fr 1.2fr', gap: '12px', alignItems: 'flex-start' }}>
                 <div>
-                  <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Prix</label>
+                  <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>
+                    Prix ({form.description === 'HTG' ? 'HTG' : '$'})
+                  </label>
                   <input type="number" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} className="input-field" min="0" />
+                </div>
+                <div>
+                  <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Devise</label>
+                  <div style={{ display: 'flex', border: '1px solid var(--border-default)', borderRadius: '10px', overflow: 'hidden', height: '42px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setForm({ ...form, description: 'USD' })}
+                      style={{
+                        flex: 1,
+                        background: form.description === 'USD' ? 'var(--brand-primary)' : 'transparent',
+                        color: form.description === 'USD' ? 'white' : 'var(--text-primary)',
+                        border: 'none',
+                        fontWeight: '700',
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      USD ($)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setForm({ ...form, description: 'HTG' })}
+                      style={{
+                        flex: 1,
+                        background: form.description === 'HTG' ? 'var(--brand-primary)' : 'transparent',
+                        color: form.description === 'HTG' ? 'white' : 'var(--text-primary)',
+                        border: 'none',
+                        fontWeight: '700',
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        borderLeft: '1px solid var(--border-default)'
+                      }}
+                    >
+                      HTG (G)
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Quantité</label>
@@ -341,7 +509,7 @@ export default function AdminTicketsPage() {
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '8px', marginBottom: '8px' }}>
                           <input type="text" placeholder="Nom (Ex: VIP)" value={tier.name} onChange={e => updateTier(tier.id, 'name', e.target.value)} className="input-field" style={{ padding: '8px', fontSize: '13px' }} />
-                          <input type="number" placeholder="Prix" value={tier.price || ''} onChange={e => updateTier(tier.id, 'price', parseFloat(e.target.value) || 0)} className="input-field" style={{ padding: '8px', fontSize: '13px' }} />
+                          <input type="number" placeholder={`Prix (${form.description === 'HTG' ? 'HTG' : '$'})`} value={tier.price || ''} onChange={e => updateTier(tier.id, 'price', parseFloat(e.target.value) || 0)} className="input-field" style={{ padding: '8px', fontSize: '13px' }} />
                         </div>
                         <textarea placeholder="Avantages (un par ligne)" value={(tier.benefits || []).join('\n')} onChange={e => updateTier(tier.id, 'benefits', e.target.value.split('\n').filter(b => b.trim() !== ''))} className="input-field" rows={2} style={{ resize: 'vertical', padding: '8px', fontSize: '13px' }} />
                       </div>

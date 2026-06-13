@@ -1,27 +1,41 @@
-# 01_prd.md - Design System Redesign PRD
+# Product Requirements Document (PRD) - Ticket Currency & Automatic Ticket Creation
 
 ## 1. Objectives & Scoping
-The objective of this design system overhaul is to transition the `uplift-web` application to **"Lumière d'Haïti"** (Light of Haiti)—a premium, light-themed, high-density, neo-modernist digital editorial aesthetic featuring glassmorphism and ambient elements. The goal is to enforce visual excellence, clean component structure, accessibility compliance, and strict consistency across the entire website.
+The objective is to allow administrators to configure a ticket currency (USD or HTG) and automatically generate a default Standard ticket type matching the event's capacity when creating any new event.
 
-### Must-Haves
-- **Strict Light Mode**: All pages must adopt slate-tinted off-white page backgrounds (`#F4F6FA`) and pure white card surfaces (`#FFFFFF`). No pure dark mode pages or layout slots (except the video streaming theater viewport).
-- **Glassmorphic Surface Design**: Frosted glass card structures (`rgba(255, 255, 255, 0.65)`, `backdrop-filter: blur(20px)`) with subtle borders (`rgba(15, 23, 42, 0.08)`).
-- **Ambient Radial Orbs**: Soft, colored glass glowing backdrops using CSS variables to separate large hero layouts without visual clutter.
-- **Consistent Tokens**: Eliminate all hardcoded HEX/RGB/HSL colors in components. Map all styles to CSS custom property tokens declared in `app/globals.css`.
-- **Anti-Overrounding Enforcement**: No corner radius on cards, images, modals, or inputs may exceed `16px`. Exceptions are made only for circular avatars, pill buttons (`9999px`), and badges.
-- **Solid Color Integrity**: Text gradients are forbidden. Headings and labels must use solid colors.
-- **Side Stripe Elimination**: Remove all side-border decorations (e.g., thick `border-left` or `border-right` stripes greater than 1px) from highlights and sidebar states.
+### Scope Checklist
 
-### Should-Haves
-- **Micro-interactions**: Subtle hover state transitions on all links, buttons, and card elements. Cards should translate `translateY(-3px)` and activate soft shadows.
-- **Heading Hierarchy**: Clear display typography using Hanken Grotesk / Satoshi, and body copy using Outfit / Geist.
+#### Must-Haves
+- **Currency Selection Option**: Add a Currency field (USD or HTG) in the ticket creation and edit modal.
+- **Currency Display Formatting**:
+  - Table listings in the admin ticket manager must render prices formatted with currency suffix/prefix (e.g., `$15` or `1 500 HTG`).
+  - Event detail page on the public site must display ticket types and pricing tiers in their respective currency.
+- **Auto-Ticket Creation**:
+  - Upon creating a new event, automatically insert a default ticket in the `tickets` table linked to the new event.
+  - Default ticket attributes: Name = "Standard", Price = 0, Currency = "USD", Quantity = Event Capacity, Allocation Mode = "standard", Available = true.
 
-### Nice-to-Haves
-- **Fluid Layout Spacing**: Clean CSS Grid and responsive flex containers that adapt to mobile screens seamlessly.
+#### Should-Haves
+- **Contextual Pricing Input**: Price inputs in the admin modal should display the selected currency symbol (e.g., `$` or `HTG`) as a label prefix/suffix to guide input.
+- **Improved Price Summary**: Replace the generic *Plusieurs prix (N)* display in the admin table with a more useful *À partir de X* (starting from price) representation formatted in the correct currency.
+
+#### Nice-to-Haves
+- **Multi-currency support in reservations**: Store the currency selected during user registration on the reservation object (currently default is free/USD).
 
 ---
 
 ## 2. User Stories
-- **As an Attendee**, I want a highly readable, clean, and accessible light interface so that I can easily browse events, view speakers, and register for tickets.
-- **As a Speaker**, I want a professional, editorial-style presentation of my profile and details so that I feel represented in a premium visual light.
-- **As a Developer/AI Coding Agent**, I want a clear, documented design system with zero hardcoded styling violations so that I can maintain visual consistency.
+
+### Currency Settings for Ticket Types
+* **As an** event administrator,
+* **I want to** select the currency (USD or HTG) when creating or editing a ticket type,
+* **So that** attendees see prices in the local currency (HTG) or US Dollars (USD) depending on the ticket target.
+
+### Dynamic Pricing Display
+* **As a** visitor browsing an event,
+* **I want to** see the ticket prices and pricing tiers in the currency chosen by the admin,
+* **So that** I know exactly how much and in what currency I will be billed.
+
+### Zero-Configuration Ticketing
+* **As an** event organizer creating a new event,
+* **I want** the system to automatically generate a standard ticket linked to the event's capacity,
+* **So that** I don't have to manually navigate to the ticket manager and configure a ticket before attendees can start reserving seats.

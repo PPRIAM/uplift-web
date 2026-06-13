@@ -63,6 +63,32 @@ export default async function HomePage() {
     eventSessions = sessions;
   }
 
+  // Fetch event-specific speakers if featured event exists
+  let eventSpeakers = null;
+  if (featuredEvent) {
+    const { data: speakersData, error: speakersErr } = await supabase
+      .from('event_speakers')
+      .select(`
+        speaker_id,
+        speakers (
+          id,
+          full_name,
+          role,
+          bio,
+          profile_image
+        )
+      `)
+      .eq('event_id', featuredEvent.id);
+
+    if (speakersErr) {
+      console.error('Error fetching event speakers:', speakersErr);
+    } else if (speakersData) {
+      eventSpeakers = speakersData
+        .map((item: any) => item.speakers)
+        .filter((speaker: any) => speaker !== null);
+    }
+  }
+
   // Fetch featured speakers (general site speakers)
   const { data: featuredSpeakers } = await supabase
     .from('speakers')
@@ -91,6 +117,7 @@ export default async function HomePage() {
       totalSpeakers={totalSpeakers}
       featuredEvent={featuredEvent}
       eventSessions={eventSessions}
+      eventSpeakers={eventSpeakers}
     />
   );
 }

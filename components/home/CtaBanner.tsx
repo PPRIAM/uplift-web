@@ -6,10 +6,23 @@ import { ArrowRight } from 'lucide-react';
 interface CtaBannerProps {
   fallbackEventId: string;
   hasFeaturedEvent: boolean;
+  eventName?: string;
+  eventDateText?: string;
+  locationName?: string;
+  cityName?: string;
+  tagline?: string;
 }
 
 // Composant CtaBanner UPLIFT 2.0 - Bannière d'appel à l'action de fin de page
-export default function CtaBanner({ fallbackEventId, hasFeaturedEvent }: CtaBannerProps) {
+export default function CtaBanner({ 
+  fallbackEventId, 
+  hasFeaturedEvent,
+  eventName,
+  eventDateText,
+  locationName,
+  cityName,
+  tagline
+}: CtaBannerProps) {
   return (
     <section className="py-24 px-6 bg-[#F8FAFC] border-t-[1.5px] border-[#0F172A]">
       <div className="max-w-[800px] mx-auto text-center font-body">
@@ -29,14 +42,14 @@ export default function CtaBanner({ fallbackEventId, hasFeaturedEvent }: CtaBann
           <div className="relative z-10 flex flex-col items-center">
             {/* Titre de la bannière CTA */}
             <h2 className="font-heading text-[clamp(28px,4vw,44px)] font-bold text-white mb-4 tracking-tight uppercase">
-              {hasFeaturedEvent ? "Leve ansanm, Briye ansanm" : "Rejoignez la communauté"}
+              {hasFeaturedEvent ? (tagline || eventName || "Leve ansanm, Briye ansanm") : "Rejoignez la communauté"}
             </h2>
             
             <p className="text-slate-200 text-base mb-8 leading-relaxed">
               {hasFeaturedEvent ? (
                 <>
-                  25 avril • Centre d&apos;accueil Salve Regina • Gonaïves<br />
-                  Inscription gratuite — Places limitées
+                  {[eventDateText, locationName, cityName].filter(Boolean).join(' • ')}<br />
+                  Places limitées
                 </>
               ) : (
                 <>

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { Calendar, MapPin, Users, ArrowRight } from 'lucide-react';
 
 interface HeroSectionProps {
@@ -16,6 +17,7 @@ interface HeroSectionProps {
   placesRestantes: number;
   isAyibuzzMedia?: boolean;
   isLive?: boolean;
+  coverImage?: string;
 }
 
 // Section Hero d'accueil UPLIFT 2.0 (conception asymétrique et compacte)
@@ -32,6 +34,7 @@ export default function HeroSection({
   placesRestantes,
   isAyibuzzMedia = false,
   isLive = false,
+  coverImage,
 }: HeroSectionProps) {
   return (
     <section 
@@ -128,32 +131,45 @@ export default function HeroSection({
 
           </div>
           
-          {/* Bloc de droite : Illustration filaire technique dynamique (5 colonnes) */}
-          <div className="lg:col-span-5 hidden lg:flex justify-center items-center relative select-none">
-            {/* L&apos;illustration filaire à cercles concentriques dynamiques cobalt */}
-            <div className="w-full max-w-[420px] aspect-square relative animate-float">
-              <svg className="w-full h-full text-[#0E1AD4]" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
-                {/* Lignes de repère techniques */}
-                <line x1="200" y1="20" x2="200" y2="380" stroke="currentColor" strokeWidth="1" strokeDasharray="4 4" className="opacity-45" />
-                <line x1="20" y1="200" x2="380" y2="200" stroke="currentColor" strokeWidth="1" strokeDasharray="4 4" className="opacity-45" />
-                <line x1="72" y1="72" x2="328" y2="328" stroke="currentColor" strokeWidth="0.75" strokeDasharray="2 6" className="opacity-30" />
-                <line x1="72" y1="328" x2="328" y2="72" stroke="currentColor" strokeWidth="0.75" strokeDasharray="2 6" className="opacity-30" />
-                
-                {/* Cercles concentriques */}
-                <circle cx="200" cy="200" r="170" stroke="currentColor" strokeWidth="1.5" strokeDasharray="5 5" className="animate-[spin_60s_linear_infinite] opacity-60" />
-                <circle cx="200" cy="200" r="130" stroke="currentColor" strokeWidth="1.5" className="opacity-75" />
-                <circle cx="200" cy="200" r="90" stroke="currentColor" strokeWidth="1" strokeDasharray="8 4" className="animate-[spin_30s_linear_infinite_reverse] opacity-80" />
-                <circle cx="200" cy="200" r="50" stroke="currentColor" strokeWidth="1.5" className="opacity-90" />
-                <circle cx="200" cy="200" r="15" stroke="currentColor" strokeWidth="2" />
-                
-                {/* Points de pivot cinétiques */}
-                <circle cx="200" cy="70" r="4.5" fill="currentColor" />
-                <circle cx="330" cy="200" r="4.5" fill="currentColor" />
-                <circle cx="200" cy="330" r="4.5" fill="currentColor" />
-                <circle cx="70" cy="200" r="4.5" fill="currentColor" />
-                <circle cx="200" cy="200" r="4" fill="#F8FAFC" />
-              </svg>
-            </div>
+          {/* Bloc de droite : Illustration filaire technique dynamique OU Image de couverture (5 colonnes) */}
+          <div className="lg:col-span-5 hidden lg:flex justify-center items-center relative select-none w-full">
+            {coverImage ? (
+              <div className="w-full max-w-[440px] aspect-[4/3] relative rounded-[16px] overflow-hidden border-[1.5px] border-[#0F172A] shadow-[6px_6px_0px_#0F172A] animate-float">
+                <Image
+                  src={coverImage}
+                  alt={eventName}
+                  fill
+                  sizes="440px"
+                  priority
+                  className="object-cover animate-delay-200"
+                />
+              </div>
+            ) : (
+              /* L'illustration filaire à cercles concentriques dynamiques cobalt */
+              <div className="w-full max-w-[420px] aspect-square relative animate-float">
+                <svg className="w-full h-full text-[#0E1AD4]" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  {/* Lignes de repère techniques */}
+                  <line x1="200" y1="20" x2="200" y2="380" stroke="currentColor" strokeWidth="1" strokeDasharray="4 4" className="opacity-45" />
+                  <line x1="20" y1="200" x2="380" y2="200" stroke="currentColor" strokeWidth="1" strokeDasharray="4 4" className="opacity-45" />
+                  <line x1="72" y1="72" x2="328" y2="328" stroke="currentColor" strokeWidth="0.75" strokeDasharray="2 6" className="opacity-30" />
+                  <line x1="72" y1="328" x2="328" y2="72" stroke="currentColor" strokeWidth="0.75" strokeDasharray="2 6" className="opacity-30" />
+                  
+                  {/* Cercles concentriques */}
+                  <circle cx="200" cy="200" r="170" stroke="currentColor" strokeWidth="1.5" strokeDasharray="5 5" className="animate-[spin_60s_linear_infinite] opacity-60" />
+                  <circle cx="200" cy="200" r="130" stroke="currentColor" strokeWidth="1.5" className="opacity-75" />
+                  <circle cx="200" cy="200" r="90" stroke="currentColor" strokeWidth="1" strokeDasharray="8 4" className="animate-[spin_30s_linear_infinite_reverse] opacity-80" />
+                  <circle cx="200" cy="200" r="50" stroke="currentColor" strokeWidth="1.5" className="opacity-90" />
+                  <circle cx="200" cy="200" r="15" stroke="currentColor" strokeWidth="2" />
+                  
+                  {/* Points de pivot cinétiques */}
+                  <circle cx="200" cy="70" r="4.5" fill="currentColor" />
+                  <circle cx="330" cy="200" r="4.5" fill="currentColor" />
+                  <circle cx="200" cy="330" r="4.5" fill="currentColor" />
+                  <circle cx="70" cy="200" r="4.5" fill="currentColor" />
+                  <circle cx="200" cy="200" r="4" fill="#F8FAFC" />
+                </svg>
+              </div>
+            )}
           </div>
           
         </div>
