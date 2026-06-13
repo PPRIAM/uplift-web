@@ -83,7 +83,7 @@ export default function SessionsSection({
               key={session.id}
               className={`card animate-fade-in-up p-8 animate-delay-${(index + 1) * 100} border-[1.5px] border-[#0F172A] shadow-[4px_4px_0px_#0F172A] relative overflow-hidden flex flex-col min-h-[380px] transition-all duration-300 ${
                 isDark 
-                  ? 'bg-[#334155] text-white' 
+                  ? 'card-dark bg-[#334155] text-white' 
                   : 'bg-white text-[#0F172A]'
               }`}
             >

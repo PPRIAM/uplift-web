@@ -191,31 +191,40 @@ body {
 
 /* Carte sombre alternative (#334155) */
 .card-dark,
-.theme-dark .card,
-.grid > .card:nth-child(even) {
-  background-color: var(--bg-surface-dark);
-  color: var(--text-light);
+.theme-dark .card {
+  background-color: var(--bg-surface-dark) !important;
+  color: var(--text-light) !important;
   border: 1.5px solid var(--border-color);
   box-shadow: 4px 4px 0px var(--border-color);
 }
 
 /* Ajustements de contraste pour le contenu des cartes sombres */
+.card-dark h1,
+.card-dark h2,
 .card-dark h3,
+.card-dark h4,
+.card-dark h5,
+.card-dark h6,
+.theme-dark .card h1,
+.theme-dark .card h2,
 .theme-dark .card h3,
-.grid > .card:nth-child(even) h3 {
+.theme-dark .card h4,
+.theme-dark .card h5,
+.theme-dark .card h6 {
   color: var(--text-light) !important;
 }
 
 .card-dark p,
+.card-dark span:not([class*="badge"]):not([class*="btn"]),
+.card-dark li,
+.card-dark a:not([class*="btn-"]),
+.card-dark summary,
 .theme-dark .card p,
-.grid > .card:nth-child(even) p {
+.theme-dark .card span:not([class*="badge"]):not([class*="btn"]),
+.theme-dark .card li,
+.theme-dark .card a:not([class*="btn-"]),
+.theme-dark .card summary {
   color: #E2E8F0 !important; /* Contraste AA garanti sur fond sombre */
-}
-
-.card-dark span,
-.theme-dark .card span,
-.grid > .card:nth-child(even) span {
-  color: #F8FAFC !important;
 }
 
 /* --- Boutons de Navigation et CTA --- */
@@ -243,8 +252,7 @@ body {
 /* Adaptation du bouton primaire sur les surfaces sombres */
 .theme-dark .btn-primary,
 .bg-surface-dark .btn-primary,
-.card-dark .btn-primary,
-.grid > .card:nth-child(even) .btn-primary {
+.card-dark .btn-primary {
   background-color: var(--bg-surface-light);
   color: var(--brand-accent) !important;
   box-shadow: 3px 3px 0px var(--border-color);
@@ -274,8 +282,7 @@ body {
 /* Adaptation du bouton secondaire sur fond sombre */
 .theme-dark .btn-secondary,
 .bg-surface-dark .btn-secondary,
-.card-dark .btn-secondary,
-.grid > .card:nth-child(even) .btn-secondary {
+.card-dark .btn-secondary {
   color: var(--text-light) !important;
   border-color: var(--text-light);
   box-shadow: 3px 3px 0px var(--text-light);
@@ -354,7 +361,8 @@ body {
 }
 
 .theme-dark .btn-secondary:hover,
-.bg-surface-dark .btn-secondary:hover {
+.bg-surface-dark .btn-secondary:hover,
+.card-dark .btn-secondary:hover {
   box-shadow: 5px 5px 0px var(--text-light);
 }
 
@@ -366,7 +374,8 @@ body {
 }
 
 .theme-dark .btn-secondary:active,
-.bg-surface-dark .btn-secondary:active {
+.bg-surface-dark .btn-secondary:active,
+.card-dark .btn-secondary:active {
   box-shadow: 1px 1px 0px var(--text-light);
 }
 

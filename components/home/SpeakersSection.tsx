@@ -45,7 +45,7 @@ export default function SpeakersSection({ activeSpeakers, hasFeaturedEvent, fall
                 key={speaker.id}
                 className={`animate-fade-in-up card border-[1.5px] border-[#0F172A] rounded-[16px] py-12 px-8 text-center shadow-[4px_4px_0px_#0F172A] transition-all duration-300 relative overflow-hidden animate-delay-${(index + 1) * 100} ${
                   isDark 
-                    ? 'bg-[#334155] text-white' 
+                    ? 'card-dark bg-[#334155] text-white' 
                     : 'bg-white text-[#0F172A]'
                 }`}
               >

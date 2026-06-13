@@ -113,7 +113,7 @@ export default function WhyUpliftSection({ hasFeaturedEvent, eventMetadata }: Wh
               key={index}
               className={`card animate-fade-in-up p-8 border-[1.5px] border-[#0F172A] rounded-[16px] shadow-[4px_4px_0px_#0F172A] transition-all duration-300 relative overflow-hidden flex flex-col min-h-[300px] animate-delay-${(index + 1) * 100} ${
                 isDark 
-                  ? 'bg-[#334155] text-white' 
+                  ? 'card-dark bg-[#334155] text-white' 
                   : 'bg-white text-[#0F172A]'
               }`}
             >

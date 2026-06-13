@@ -120,18 +120,23 @@ export default function AboutPage() {
               { n: '02', title: 'Solidarité', desc: 'C\'est ensemble que nous pouvons bâtir des solutions durables. Seul on va vite; ensemble on va loin.' },
               { n: '03', title: 'Innovation', desc: 'Repenser nos approches pour relever les défis complexes d\'aujourd\'hui avec les outils de demain.' },
               { n: '04', title: 'Excellence', desc: 'Nous visons le plus haut standard dans tout ce que nous entreprenons, sans exception.' },
-            ].map((v, i) => (
-              <li
-                key={v.n}
-                className={`card p-8 relative overflow-hidden flex flex-col justify-between min-h-[200px] animate-fade-in-up animate-delay-${(i + 1) * 100}`}
-              >
-                <span className="absolute top-4 right-5 text-4xl font-black text-[var(--bg-elevated)] leading-none font-display select-none pointer-events-none">{v.n}</span>
-                <div>
-                  <h3 className="font-display text-base font-extrabold text-[var(--text-primary)] mb-2.5 uppercase tracking-tight">{v.title}</h3>
-                  <p className="text-xs text-[var(--text-muted)] leading-relaxed font-medium">{v.desc}</p>
-                </div>
-              </li>
-            ))}
+            ].map((v, i) => {
+              const isDark = i % 2 !== 0;
+              return (
+                <li
+                  key={v.n}
+                  className={`card p-8 relative overflow-hidden flex flex-col justify-between min-h-[200px] animate-fade-in-up animate-delay-${(i + 1) * 100} ${
+                    isDark ? 'card-dark bg-[var(--bg-surface-dark)] text-white' : 'bg-white text-[var(--text-primary)]'
+                  }`}
+                >
+                  <span className="absolute top-4 right-5 text-4xl font-black text-[var(--bg-elevated)] leading-none font-display select-none pointer-events-none">{v.n}</span>
+                  <div>
+                    <h3 className={`font-display text-base font-extrabold mb-2.5 uppercase tracking-tight ${isDark ? 'text-white' : 'text-[var(--text-primary)]'}`}>{v.title}</h3>
+                    <p className={`text-xs leading-relaxed font-medium ${isDark ? 'text-slate-200' : 'text-[var(--text-muted)]'}`}>{v.desc}</p>
+                  </div>
+                </li>
+              );
+            })}
           </ol>
         </div>
       </section>
