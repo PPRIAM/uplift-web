@@ -1,0 +1,30 @@
+{
+  "tech": {
+    "label": "Technologie & Innovation",
+    "benefits": ["Networking professionnel", "Mentorat tech", "Accès au code source", "Certificat de participation", "Rencontre avec des recruteurs"],
+    "objectives": ["Apprentissage de technologies", "Développement de projets", "Collaboration open-source", "Innovation locale", "Sensibilisation au numérique"],
+    "outcomes": ["Prototype fonctionnel", "Plan de projet", "Compétences techniques", "Réseau élargi", "Opportunités de stage"],
+    "audience": ["Développeurs", "Étudiants en informatique", "Entrepreneurs tech", "Professionnels de la tech", "Passionnés de nouvelles technologies"]
+  },
+  "culture": {
+    "label": "Culture & Art",
+    "benefits": ["Immersion culturelle", "Rencontre d'artistes", "Partage d'expériences", "Inspiration créative", "Accès VIP aux spectacles"],
+    "objectives": ["Valorisation du patrimoine", "Expression artistique", "Découverte de talents", "Échange culturel", "Sensibilisation artistique"],
+    "outcomes": ["Création artistique commune", "Nouvelles collaborations", "Inspiration personnelle", "Partage culturel", "Soutien aux créateurs locaux"],
+    "audience": ["Artistes", "Créateurs de contenu", "Jeunesse haïtienne", "Membres de la diaspora", "Passionnés de culture"]
+  },
+  "leadership": {
+    "label": "Leadership & Citoyenneté",
+    "benefits": ["Développement personnel", "Networking civique", "Accès à des ressources de leadership", "Certificat d'engagement", "Rencontre avec des leaders"],
+    "objectives": ["Éveil de la conscience citoyenne", "Inspiration collective", "Développement du leadership", "Action communautaire", "Réflexion sur le changement social"],
+    "outcomes": ["Plan d'action communautaire", "Engagement accru", "Nouvelles connexions civiques", "Compétences en leadership", "Initiatives locales"],
+    "audience": ["Jeunes leaders", "Membres d'associations", "Étudiants", "Citoyens engagés", "Haitian youth"]
+  },
+  "education": {
+    "label": "Éducation & Académique",
+    "benefits": ["Acquisition de connaissances", "Certificat académique", "Accès aux supports de cours", "Mentorat académique", "Matériel pédagogique"],
+    "objectives": ["Apprentissage approfondi", "Vulgarisation scientifique", "Développement de compétences", "Débat intellectuel", "Partage de recherche"],
+    "outcomes": ["Connaissances enrichies", "Projet de recherche", "Méthodologie de travail", "Attestation de formation", "Réseau académique"],
+    "audience": ["Étudiants", "Enseignants", "Chercheurs", "Professionnels de l'éducation", "Parents"]
+  }
+}
