@@ -75,7 +75,7 @@ export default function SolarSpine() {
         
         {/* Ticker vertical signature d'UPLIFT 2.0 */}
         <div className="solar-spine-ticker font-semibold text-xs tracking-widest text-[#0E1AD4]">
-          {isLive ? '🔴 DIRECT EN COURS' : 'UPLIFT 2.0 • LEVE ANSANM • HAÏTI'}
+          {isLive ? '🔴 DIRECT EN COURS' : 'AYIBUZZ MÉDIA • LEVE ANSANM • HAÏTI'}
         </div>
       </div>
     </div>

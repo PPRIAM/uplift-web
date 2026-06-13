@@ -5,6 +5,7 @@ import { submitSpeakerApplication } from './actions';
 import { ChevronLeft, ArrowRight, CheckCircle2, AlertCircle, Upload, ImageIcon, X } from 'lucide-react';
 import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
+import { compressImage } from '@/utils/imageCompression';
 
 export default function SpeakerApplyPage() {
   const [loading, setLoading] = useState(false);
@@ -37,12 +38,14 @@ export default function SpeakerApplyPage() {
   async function uploadProfileImage(applicationId: string): Promise<string | null> {
     if (!imageFile) return null;
     const supabase = createClient();
-    const ext = imageFile.name.split('.').pop();
-    const filePath = `${applicationId}/profile.${ext}`;
+    
+    // Compress profile image to JPEG at 0.82 quality, max 1600px
+    const compressedFile = await compressImage(imageFile, 1600, 0.82);
+    const filePath = `${applicationId}/profile.jpg`;
     
     const { error: uploadError } = await supabase.storage
       .from('speakers')
-      .upload(filePath, imageFile, { upsert: true });
+      .upload(filePath, compressedFile, { upsert: true });
 
     if (uploadError) {
       console.error('Upload error:', uploadError);

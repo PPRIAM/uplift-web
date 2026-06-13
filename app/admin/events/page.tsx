@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createClient } from '@/utils/supabase/client';
+import { compressImage } from '@/utils/imageCompression';
 import { Plus, Edit, Trash2, Eye, EyeOff, Search, CheckCircle, X, RefreshCw, Upload, ImageIcon, Star, Radio } from 'lucide-react';
 import Link from 'next/link';
 import { formatDateShort } from '@/lib/dateUtils';
@@ -240,11 +241,14 @@ export default function AdminEventsPage() {
   const uploadCoverImage = async (eventId: string): Promise<string | null> => {
     if (!coverFile) return null;
     const supabase = createClient();
-    const ext = coverFile.name.split('.').pop();
-    const filePath = `${eventId}/cover.${ext}`;
+    
+    // Compress the image before uploading (keeping high visual quality)
+    const compressedFile = await compressImage(coverFile, 1600, 0.85);
+    const filePath = `${eventId}/cover.jpg`;
+    
     const { error } = await supabase.storage
       .from('event-covers')
-      .upload(filePath, coverFile, { upsert: true });
+      .upload(filePath, compressedFile, { upsert: true });
     if (error) {
       alert(`Erreur upload image: ${error.message}`);
       return null;

@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { createClient } from '@/utils/supabase/client';
+import { compressImage } from '@/utils/imageCompression';
 import { Plus, Edit, Trash2, Search, X, CheckCircle, RefreshCw, Eye, EyeOff, Upload, ImageIcon, Camera } from 'lucide-react';
 import { toggleSpeakerVisibility } from '../speaker-applications/actions';
 
@@ -146,13 +147,15 @@ export default function AdminSpeakersPage() {
   const uploadSpeakerImage = async (speakerId: string): Promise<string | null> => {
     if (!imageFile) return null;
     const supabase = createClient();
-    const ext = imageFile.name.split('.').pop();
-    const filePath = `${speakerId}/profile.${ext}`;
     
     setIsUploading(true);
+    // Compress profile image to JPEG at 0.82 quality, max 1600px
+    const compressedFile = await compressImage(imageFile, 1600, 0.82);
+    const filePath = `${speakerId}/profile.jpg`;
+    
     const { error: uploadError } = await supabase.storage
       .from('speakers')
-      .upload(filePath, imageFile, { upsert: true });
+      .upload(filePath, compressedFile, { upsert: true });
 
     if (uploadError) {
       alert(`Erreur upload image: ${uploadError.message}`);
