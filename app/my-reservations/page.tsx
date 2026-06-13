@@ -41,6 +41,60 @@ function makeGuest(overrides: Partial<GuestEntry> = {}): GuestEntry {
   };
 }
 
+function compressImage(file: File, maxDimension = 1200, quality = 0.7): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxDimension) {
+            height = Math.round((height * maxDimension) / width);
+            width = maxDimension;
+          }
+        } else {
+          if (height > maxDimension) {
+            width = Math.round((width * maxDimension) / height);
+            height = maxDimension;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Failed to get 2D context from canvas'));
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              resolve(blob);
+            } else {
+              reject(new Error('Canvas toBlob returned null'));
+            }
+          },
+          'image/jpeg',
+          quality
+        );
+      };
+      img.onerror = (error) => reject(error);
+    };
+    reader.onerror = (error) => reject(error);
+  });
+}
+
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 /** A single guest entry card with name + email fields */
@@ -319,40 +373,57 @@ function ReservationForm() {
 
     setSubmitting(true);
     let payment_proof_url = '';
+    let payment_proof_base64 = '';
+    let payment_proof_name = '';
 
     if (displayPrice > 0 && paymentProofFile) {
-      const supabase = createClient();
-      const fileExt = paymentProofFile.name.split('.').pop();
-      const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
-      const { error: uploadError, data } = await supabase.storage
-        .from('payment_proofs')
-        .upload(fileName, paymentProofFile);
-
-      if (uploadError) {
-        setGlobalError(`Erreur lors de l'upload de la preuve de paiement: ${uploadError.message}`);
+      try {
+        const compressedBlob = await compressImage(paymentProofFile);
+        payment_proof_base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(compressedBlob);
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = error => reject(error);
+        });
+        // Ensure name has a .jpg extension
+        let baseName = paymentProofFile.name;
+        const lastDot = baseName.lastIndexOf('.');
+        if (lastDot !== -1) {
+          baseName = baseName.substring(0, lastDot);
+        }
+        payment_proof_name = `${baseName}.jpg`;
+      } catch (err: any) {
+        setGlobalError(`Erreur lors de la compression ou de la lecture de la preuve de paiement: ${err.message || err}`);
         setSubmitting(false);
         return;
       }
-      payment_proof_url = data.path;
     }
 
     const submittedResults: SubmitResult[] = [];
 
     for (const guest of guests) {
       try {
+        const payload: any = {
+          full_name: guest.full_name.trim(),
+          email:     guest.email.toLowerCase().trim(),
+          quantity:  1,           // each guest = 1 place
+          event_id:  eventId,
+          ticket_id: ticketId,
+          ticket_tier: tierId,
+          payment_method: paymentMethod,
+        };
+
+        if (payment_proof_url) {
+          payload.payment_proof_url = payment_proof_url;
+        } else if (payment_proof_base64) {
+          payload.payment_proof_base64 = payment_proof_base64;
+          payload.payment_proof_name = payment_proof_name;
+        }
+
         const res = await fetch('/api/reservations', {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            full_name: guest.full_name.trim(),
-            email:     guest.email.toLowerCase().trim(),
-            quantity:  1,           // each guest = 1 place
-            event_id:  eventId,
-            ticket_id: ticketId,
-            ticket_tier: tierId,
-            payment_method: paymentMethod,
-            payment_proof_url,
-          }),
+          body: JSON.stringify(payload),
         });
 
         const contentType = res.headers.get('content-type') || '';
@@ -363,6 +434,9 @@ function ReservationForm() {
 
         if (res.ok && data.success) {
           submittedResults.push({ guest, success: true });
+          if (data.payment_proof_url) {
+            payment_proof_url = data.payment_proof_url;
+          }
         } else {
           submittedResults.push({
             guest,
@@ -420,6 +494,15 @@ function ReservationForm() {
         <div className="flex flex-col gap-sm mb-xl">
           {results.map((r, i) => <SubmitResultRow key={r.guest.id} result={r} index={i} />)}
         </div>
+
+        {!isAuthenticated && allOk && succeeded.length > 0 && (
+          <div className="mt-md p-md bg-[rgba(14,26,212,0.04)] border border-[var(--border-subtle)] rounded-2xl text-left mb-lg animate-fade-in-up">
+            <h4 className="font-extrabold text-[var(--brand-accent)] text-sm mb-xs">✨ Votre compte temporaire est créé</h4>
+            <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+              Un compte a été automatiquement créé pour vous à l'adresse <strong>{succeeded[0].guest.email}</strong>. Un e-mail contenant vos billets ainsi qu'un mot de passe temporaire pour vous connecter et changer votre mot de passe vous a été envoyé.
+            </p>
+          </div>
+        )}
 
         {/* Retry partial failures */}
         {failed.length > 0 && (
@@ -537,35 +620,7 @@ function ReservationForm() {
   // ── Registration Form ──────────────────────────────────────────────────────
   const allCurrentEmails = guests.map(g => g.email.toLowerCase().trim());
 
-  // Force Login if buying ticket but not authenticated
-  if (eventId && !isAuthenticated) {
-    const loginUrl = `/auth/login?redirect=${encodeURIComponent(`/my-reservations?event=${eventId}&qty=${searchParams.get('qty') || 1}${ticketId ? `&ticket=${ticketId}` : ''}${tierId ? `&tier=${tierId}` : ''}`)}`;
-    
-    return (
-      <div className="max-w-[440px] mx-auto my-3xl px-md">
-        <div className="text-center mb-xl">
-          <div className="w-14 h-14 rounded-full bg-[rgba(14,26,212,0.08)] flex items-center justify-center mx-auto mb-md">
-            <User size={24} className="text-[var(--brand-accent)]" />
-          </div>
-          <h1 className="font-display text-2xl font-extrabold mb-xs">
-             Connectez-vous pour réserver
-          </h1>
-          <p className="text-[var(--text-muted)] text-sm">
-             Vous devez posséder un compte Ayibuzz pour continuer votre réservation.
-          </p>
-        </div>
-
-        <div className="card p-lg text-center">
-           <p className="mb-lg text-[var(--text-secondary)]">
-             Connectez-vous ou créez un compte rapidement pour finaliser votre inscription.
-           </p>
-           <Link href={loginUrl} className="btn-primary w-full flex justify-center items-center gap-sm py-3.5 no-underline">
-             Se connecter / S'inscrire <ArrowRight size={16} />
-           </Link>
-        </div>
-      </div>
-    );
-  }
+  // Guest checkout allowed - no forced redirect wall
 
   return (
     <div className="max-w-[640px] mx-auto px-md md:px-lg py-xl md:py-2xl">

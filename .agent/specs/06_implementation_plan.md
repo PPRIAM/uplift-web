@@ -1,34 +1,82 @@
-# Ticket Currency & Auto Ticket Creation Implementation Plan
+# User Bro Implementation Plan
 
-**Goal:** Allow administrators to configure ticket currencies (USD/HTG) and automatically create standard tickets when creating events.
-**Architecture:** Reuse the existing `description` text column in the `tickets` table to store the currency code ('USD' or 'HTG') at the API layer. Insert default tickets inside the client-side event creator right after a successful event creation response is received.
-**Tech Stack:** Next.js, React state/components, Supabase Client SDK, vanilla CSS custom layouts.
+**Goal:** Create the autonomous "User Bro" global testing agent with customizable personas, dynamic frustration tracking, blacklist safety guardrails, and hybrid dashboard reporting.
+
+**Architecture:** A modular agent structure driven by a main coordinator state machine. It leverages Playwright (`chrome-devtools` protocol) for visual browsing and text inputs, an LLM for cognitive action decision-making, and an event-driven logger to audit console warnings/network latency.
+
+**Tech Stack:** Node.js, TypeScript, Playwright (Chromium), Gemini 1.5 Pro (via Google Generative AI SDK), Sharp (for visual annotations), Vitest (for tests).
 
 ---
 
-### Task 1: Add price formatting helper function
-**Files:** Modify: `lib/ticketUtils.ts` | Test: `scratch/test-format-price.mjs`
-- [ ] Step 1: Write test case in `scratch/test-format-price.mjs` verifying that `formatPrice(15, 'USD')` outputs `"$15"` and `formatPrice(1500, 'HTG')` outputs `"1 500 HTG"`.
-- [ ] Step 2: Verify failure by running `node scratch/test-format-price.mjs` (it will fail since the helper is not defined).
-- [ ] Step 3: Implement `formatPrice` function in `lib/ticketUtils.ts`.
-- [ ] Step 4: Verify pass by running `node scratch/test-format-price.mjs`.
+## 1. File Mapping
 
-### Task 2: Implement Currency Option in Admin Tickets Page
-**Files:** Modify: `app/admin/tickets/page.tsx` | Test: `npm run build`
-- [ ] Step 1: Update form state to add `description: 'USD'` and update `openCreate`/`openEdit` to set the currency.
-- [ ] Step 2: Add visual segmented button toggles for USD/HTG next to the Price input inside the JSX grid layout.
-- [ ] Step 3: Update `handleSave` to pass `description: form.description` into ticket data, and `handleDelete` to show deletion error banners.
-- [ ] Step 4: Update the table price columns to format price using `formatPrice` and list starting price (*À partir de...*).
-- [ ] Step 5: Verify pass by running `npm run build`.
+| File Path | Responsibility |
+|---|---|
+| `src/agents/user-bro/types.ts` | Shared type definitions for state, runs, steps, and persona parameters. |
+| `src/agents/user-bro/guardrails.ts` | Scans visual text labels against the blocklist and handles CLI prompt/skip flow. |
+| `src/agents/user-bro/frustration-tracker.ts` | Computes step-by-step frustration changes based on console/network logs and page state stability. |
+| `src/agents/user-bro/browser-controller.ts` | Wraps Playwright context, page initialization, screenshot capture, DOM tree dumps, and actions. |
+| `src/agents/user-bro/decision-maker.ts` | Orchestrates LLM prompt construction, cognitive walkthrough monologue output, and element selection. |
+| `src/agents/user-bro/reporter.ts` | Performs image circle drawing via Sharp and formats the Hybrid Markdown storyboard. |
+| `src/agents/user-bro/run.ts` | Main execution entry point tying the state machine together. |
+| `tests/agents/user-bro/user-bro.test.ts` | E2E and unit test suites confirming state updates, guardrails, and reporting. |
 
-### Task 3: Render Dynamic Currency on Event Details Page
-**Files:** Modify: `app/events/[id]/EventClient.tsx` | Test: `npm run build`
-- [ ] Step 1: Import `formatPrice` from `lib/ticketUtils`.
-- [ ] Step 2: Replace hardcoded `$` symbols with dynamic calls to `formatPrice(t.price, t.description)` for base tickets and pricing tiers.
-- [ ] Step 3: Verify pass by running `npm run build`.
+---
 
-### Task 4: Auto-Create default ticket upon Event Creation
-**Files:** Modify: `app/admin/events/page.tsx` | Test: `npm run build`
-- [ ] Step 1: Inside `handleSave` method, check if `!editEvent` (creating a new event).
-- [ ] Step 2: After the insert query succeeds, retrieve `savedEventId` and call `supabase.from('tickets').insert()` to create a default free Standard ticket with quantity equal to the event's capacity.
-- [ ] Step 3: Verify pass by running `npm run build`.
+## 2. Task Breakdown
+
+### Task 1: Type Definitions Setup
+**Files:** Create: `src/agents/user-bro/types.ts` | Test: `tests/agents/user-bro/user-bro.test.ts`
+- [ ] Step 1: Write a unit test verifying that the launch configurations and state schemas conform to the PRD constraints.
+- [ ] Step 2: Run test using `npx vitest run tests/agents/user-bro/user-bro.test.ts` and verify it fails due to missing type imports.
+- [ ] Step 3: Implement `types.ts` defining `UserBroPersona`, `UserBroState`, `UserBroStep`, and `UserBroRun`.
+- [ ] Step 4: Run the test to confirm it compiles and passes.
+- [ ] Step 5: Commit changes.
+
+### Task 2: Security Guardrails
+**Files:** Create: `src/agents/user-bro/guardrails.ts` | Test: `tests/agents/user-bro/user-bro.test.ts`
+- [ ] Step 1: Add a test asserting that strings containing "delete", "supprimer", and "payer" trigger a security violation, whereas "save" and "submit" do not.
+- [ ] Step 2: Verify test fails.
+- [ ] Step 3: Implement `guardrails.ts` with a regex-based `isDestructiveAction(label: string)` function and a prompt handler function.
+- [ ] Step 4: Verify test passes.
+- [ ] Step 5: Commit changes.
+
+### Task 3: Frustration State Tracker
+**Files:** Create: `src/agents/user-bro/frustration-tracker.ts` | Test: `tests/agents/user-bro/user-bro.test.ts`
+- [ ] Step 1: Add a unit test verifying the math: when patience is `0.5`, an input validation error (`+20`) results in `+40` frustration.
+- [ ] Step 2: Verify test fails.
+- [ ] Step 3: Implement `frustration-tracker.ts` containing the weights table, multiplier calculation, and `calculateStepFrustration(logs: TechnicalLogs, didPageChange: boolean, patience: number)` function.
+- [ ] Step 4: Verify test passes.
+- [ ] Step 5: Commit changes.
+
+### Task 4: Browser Controller & Playwright
+**Files:** Create: `src/agents/user-bro/browser-controller.ts` | Test: `tests/agents/user-bro/user-bro.test.ts`
+- [ ] Step 1: Add integration tests verifying Playwright launches a browser, navigates, and correctly attaches console/network message listeners.
+- [ ] Step 2: Verify test fails.
+- [ ] Step 3: Implement `browser-controller.ts` encapsulating browser launch, video recording configuration, page navigation, click/type coordinate conversions, and screenshot captures.
+- [ ] Step 4: Verify test passes.
+- [ ] Step 5: Commit changes.
+
+### Task 5: Cognitive Decision Maker (LLM Integration)
+**Files:** Create: `src/agents/user-bro/decision-maker.ts` | Test: `tests/agents/user-bro/user-bro.test.ts`
+- [ ] Step 1: Add a test that mocks the LLM API call, ensuring that when given a page screenshot and DOM tree, it returns a structured JSON containing a monologue and next coordinates.
+- [ ] Step 2: Verify test fails.
+- [ ] Step 3: Implement `decision-maker.ts` building the system prompt (injecting tech-savviness instructions) and parsing the generative model JSON output.
+- [ ] Step 4: Verify test passes.
+- [ ] Step 5: Commit changes.
+
+### Task 6: Diagnostic Reporter
+**Files:** Create: `src/agents/user-bro/reporter.ts` | Test: `tests/agents/user-bro/user-bro.test.ts`
+- [ ] Step 1: Add a test verifying that markdown generator creates the summary, lists all steps, formats frustration progress bars correctly, and references the video file path.
+- [ ] Step 2: Verify test fails.
+- [ ] Step 3: Implement `reporter.ts` using Sharp to annotate clicked targets and a template function to compile the Markdown storyboard.
+- [ ] Step 4: Verify test passes.
+- [ ] Step 5: Commit changes.
+
+### Task 7: Main Coordinator & CLI Execution
+**Files:** Create: `src/agents/user-bro/run.ts` | Test: `tests/agents/user-bro/user-bro.test.ts`
+- [ ] Step 1: Add an E2E test verifying that executing the run method walks through the browser lifecycle, performs 2 steps, and compiles the final report.
+- [ ] Step 2: Verify test fails.
+- [ ] Step 3: Implement `run.ts` implementing the state machine loop, managing the step count, updating the frustration tracker, executing actions, saving files, and catching final outcomes (SUCCESS vs ABANDONED).
+- [ ] Step 4: Verify test passes.
+- [ ] Step 5: Commit changes.

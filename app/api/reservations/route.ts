@@ -202,7 +202,18 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { full_name, email: rawEmail, quantity, event_id, ticket_id, ticket_tier, payment_method, payment_proof_url } = body as {
+  const {
+    full_name,
+    email: rawEmail,
+    quantity,
+    event_id,
+    ticket_id,
+    ticket_tier,
+    payment_method,
+    payment_proof_url,
+    payment_proof_base64,
+    payment_proof_name,
+  } = body as {
     full_name?: unknown;
     email?:     unknown;
     quantity?:  unknown;
@@ -211,6 +222,8 @@ export async function POST(req: NextRequest) {
     ticket_tier?: unknown;
     payment_method?: unknown;
     payment_proof_url?: unknown;
+    payment_proof_base64?: unknown;
+    payment_proof_name?: unknown;
   };
 
   // ── 3. Field presence validation ────────────────────────────────────────────
@@ -237,6 +250,27 @@ export async function POST(req: NextRequest) {
       { error: 'Invalid email address. Please enter a valid email (e.g. name@example.com).' },
       { status: 400 }
     );
+  }
+
+  // ── 4.5. Create Guest Auth Account if not exists ───────────────────────────
+  const supabaseAdmin = getSupabaseAdmin();
+  let tempPassword = '';
+  try {
+    const generatedPass = Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 6).toUpperCase() + '1!';
+    const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password: generatedPass,
+      email_confirm: true,
+      user_metadata: { role: 'user', full_name: name }
+    });
+    if (!authError && authUser) {
+      tempPassword = generatedPass;
+      console.log(`[Auth] Created guest account for ${email} with temp password ${tempPassword}`);
+    } else {
+      console.log(`[Auth] Guest account for ${email} already exists or failed to create:`, authError?.message);
+    }
+  } catch (authErr) {
+    console.warn('[Auth] Guest account creation error:', authErr);
   }
 
   try {
@@ -289,10 +323,60 @@ export async function POST(req: NextRequest) {
       quantity:     qty,
     };
 
+    // ── 6.5. Upload payment proof server-side if base64 is provided ─────────
+    let uploaded_proof_url = typeof payment_proof_url === 'string' ? payment_proof_url : '';
+
+    if (
+      (payment_method === 'moncash' || payment_method === 'natcash') &&
+      !uploaded_proof_url &&
+      typeof payment_proof_base64 === 'string' &&
+      payment_proof_base64.trim() !== ''
+    ) {
+      try {
+        const matches = payment_proof_base64.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+        let buffer: Buffer;
+        let mimeType = 'image/png';
+        if (matches && matches.length === 3) {
+          mimeType = matches[1];
+          buffer = Buffer.from(matches[2], 'base64');
+        } else {
+          buffer = Buffer.from(payment_proof_base64, 'base64');
+        }
+
+        const fileExt = typeof payment_proof_name === 'string' && payment_proof_name.includes('.') 
+          ? payment_proof_name.split('.').pop() 
+          : 'png';
+        const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
+
+        const { error: uploadError, data: uploadData } = await supabaseAdmin.storage
+          .from('payment_proofs')
+          .upload(fileName, buffer, {
+            contentType: mimeType,
+            duplex: 'half'
+          });
+
+        if (uploadError) {
+          console.error('[Reservations] Server-side storage upload error:', uploadError);
+          return NextResponse.json(
+            { error: `Erreur lors de l'upload de la preuve de paiement: ${uploadError.message}` },
+            { status: 500 }
+          );
+        }
+
+        uploaded_proof_url = uploadData.path;
+      } catch (uploadErr: any) {
+        console.error('[Reservations] Server-side storage upload failed:', uploadErr);
+        return NextResponse.json(
+          { error: `Erreur lors de l'upload de la preuve de paiement: ${uploadErr.message || uploadErr}` },
+          { status: 500 }
+        );
+      }
+    }
+
     if (payment_method === 'moncash' || payment_method === 'natcash') {
       reservationData.status = 'pending';
       reservationData.payment_method = payment_method;
-      reservationData.payment_proof_url = typeof payment_proof_url === 'string' ? payment_proof_url : null;
+      reservationData.payment_proof_url = uploaded_proof_url || null;
       reservationData.payment_status = 'pending';
     } else {
       reservationData.status = 'confirmed';
@@ -314,7 +398,6 @@ export async function POST(req: NextRequest) {
     }
 
     // ── 8. Insert ───────────────────────────────────────────────────────────
-    const supabaseAdmin = getSupabaseAdmin();
     const { data: insertData, error: insertError } = await supabaseAdmin
       .from('reservations')
       .insert(reservationData)
@@ -361,7 +444,6 @@ export async function POST(req: NextRequest) {
           });
         }
         
-        const supabaseAdmin = getSupabaseAdmin();
         const { data: issuedTickets, error: issueError } = await supabaseAdmin
           .from('issued_tickets')
           .insert(ticketsToCreate)
@@ -388,13 +470,38 @@ export async function POST(req: NextRequest) {
           to: email,
           subject: 'Votre Billet Confirmé pour Ayibuzz Media !',
           html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
-              <h1 style="color: #0018FF;">Réservation Confirmée !</h1>
-              <p>Bonjour ${name},</p>
-              <p>Votre place a été réservée avec succès pour l'événement.</p>
-              <p>Voici vos billets officiels, assurez-vous de les avoir sur votre téléphone à l'entrée. Chaque code est valable pour une seule personne à la fois.</p>
-              ${ticketsHTML}
-              <p>L'équipe Ayibuzz Media</p>
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; padding: 20px; border: 1px solid #eee; border-radius: 16px;">
+              <h1 style="color: #0018FF; text-align: center; font-weight: 900; margin-bottom: 24px;">Réservation Confirmée !</h1>
+              <p style="font-size: 15px; line-height: 1.6;">Bonjour <strong>${name}</strong>,</p>
+              <p style="font-size: 15px; line-height: 1.6;">Votre place a été réservée avec succès pour l'événement. Voici vos billets officiels à présenter à l'entrée :</p>
+              
+              <div style="margin: 30px 0;">
+                ${ticketsHTML}
+              </div>
+
+              ${tempPassword ? `
+                <div style="margin: 32px 0 24px; padding: 24px; border: 2px solid #0018FF; border-radius: 16px; background-color: #f4f6ff; text-align: left;">
+                  <h3 style="margin-top: 0; margin-bottom: 12px; color: #0018FF; font-weight: 800; font-size: 18px;">✨ Votre compte Ayibuzz est prêt !</h3>
+                  <p style="font-size: 14px; color: #444; margin: 0 0 16px; line-height: 1.6;">Un compte temporaire a été créé pour vous afin de retrouver vos billets et de gérer vos réservations à tout moment :</p>
+                  <table style="width: 100%; font-size: 14px; margin-bottom: 20px; border-collapse: collapse;">
+                    <tr>
+                      <td style="padding: 6px 0; color: #666; width: 100px;"><strong>Identifiant :</strong></td>
+                      <td style="padding: 6px 0; color: #111;"><code>${email}</code></td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 6px 0; color: #666;"><strong>Mot de passe :</strong></td>
+                      <td style="padding: 6px 0; color: #111;"><code>${tempPassword}</code></td>
+                    </tr>
+                  </table>
+                  <div style="text-align: center;">
+                    <a href="${APP_URL}/auth/login" style="display: inline-block; background-color: #0018FF; color: white; padding: 12px 28px; text-decoration: none; border-radius: 10px; font-size: 14px; font-weight: 800;">
+                      Se connecter & modifier mon mot de passe
+                    </a>
+                  </div>
+                </div>
+              ` : ''}
+
+              <p style="font-size: 13px; color: #888; text-align: center; margin-top: 32px;">L'équipe Ayibuzz Media · Leve ansanm, Briye ansanm</p>
             </div>
           `,
         });
@@ -405,6 +512,48 @@ export async function POST(req: NextRequest) {
 
     // ── 9. Log success ──────────────────────────────────────────────────────
     void auditLog({ event_id: eventId, email, ip, userAgent, outcome: 'success' });
+
+    if (tempPassword && reservationData.payment_status !== 'not_required') {
+      try {
+        const resend = getResend();
+        await resend.emails.send({
+          from: 'Ayibuzz Media <contact@ayibuzz-media.com>',
+          to: email,
+          subject: 'Création de votre compte Ayibuzz Media !',
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; padding: 20px; border: 1px solid #eee; border-radius: 16px;">
+              <h1 style="color: #0018FF; text-align: center; font-weight: 900; margin-bottom: 24px;">Réservation Enregistrée !</h1>
+              <p style="font-size: 15px; line-height: 1.6;">Bonjour <strong>${name}</strong>,</p>
+              <p style="font-size: 15px; line-height: 1.6;">Votre demande d'inscription pour l'événement <strong>${event.name}</strong> a été enregistrée. Notre équipe valide actuellement votre preuve de paiement.</p>
+              
+              <div style="margin: 32px 0 24px; padding: 24px; border: 2px solid #0018FF; border-radius: 16px; background-color: #f4f6ff; text-align: left;">
+                <h3 style="margin-top: 0; margin-bottom: 12px; color: #0018FF; font-weight: 800; font-size: 18px;">✨ Votre compte Ayibuzz est prêt !</h3>
+                <p style="font-size: 14px; color: #444; margin: 0 0 16px; line-height: 1.6;">Un compte temporaire a été créé pour vous afin de suivre votre réservation et d'accéder à vos billets une fois validés :</p>
+                <table style="width: 100%; font-size: 14px; margin-bottom: 20px; border-collapse: collapse;">
+                  <tr>
+                    <td style="padding: 6px 0; color: #666; width: 100px;"><strong>Identifiant :</strong></td>
+                    <td style="padding: 6px 0; color: #111;"><code>${email}</code></td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 6px 0; color: #666;"><strong>Mot de passe :</strong></td>
+                    <td style="padding: 6px 0; color: #111;"><code>${tempPassword}</code></td>
+                  </tr>
+                </table>
+                <div style="text-align: center;">
+                  <a href="${APP_URL}/auth/login" style="display: inline-block; background-color: #0018FF; color: white; padding: 12px 28px; text-decoration: none; border-radius: 10px; font-size: 14px; font-weight: 800;">
+                    Se connecter & modifier mon mot de passe
+                  </a>
+                </div>
+              </div>
+
+              <p style="font-size: 13px; color: #888; text-align: center; margin-top: 32px;">L'équipe Ayibuzz Media · Leve ansanm, Briye ansanm</p>
+            </div>
+          `,
+        });
+      } catch (emailErr) {
+        console.error('[Reservations] Welcome/Pending email failed:', emailErr);
+      }
+    }
 
     // ── 10. Update event/ticket counters (fire-and-forget) ─────────────────
     try {
@@ -423,7 +572,7 @@ export async function POST(req: NextRequest) {
       console.error('[Reservations] Counter update failed (non-fatal):', rpcErr);
     }
 
-    return NextResponse.json({ success: true, emailSent: false }, { status: 201 });
+    return NextResponse.json({ success: true, emailSent: false, payment_proof_url: uploaded_proof_url }, { status: 201 });
 
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);

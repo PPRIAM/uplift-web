@@ -4,7 +4,14 @@ import { getSupabaseAdmin } from '@/utils/supabase/admin';
 import { generateTicketCode } from '@/lib/ticketUtils';
 
 function getResend() {
-  return new Resend(process.env.RESEND_API_KEY || 're_dummy_key');
+  const key = process.env.RESEND_API_KEY;
+  if (!key || key.includes('dummy')) {
+    if (process.env.NEXT_PHASE === 'phase-production-build') {
+      return new Resend(key || 're_dummy');
+    }
+    throw new Error('CONFIG_ERROR: RESEND_API_KEY is missing.');
+  }
+  return new Resend(key);
 }
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
@@ -78,7 +85,7 @@ export async function POST(req: NextRequest) {
         `;
       }).join('');
 
-      await resend.emails.send({
+      const { error: emailError } = await resend.emails.send({
         from: 'Ayibuzz Media <contact@ayibuzz-media.com>',
         to: reservation.email,
         subject: 'Paiement Confirmé - Votre billet est prêt !',
@@ -95,6 +102,10 @@ export async function POST(req: NextRequest) {
           </div>
         `,
       });
+
+      if (emailError) {
+        throw new Error(`Failed to send confirmation email via Resend: ${emailError.message}`);
+      }
 
       // 5. Cleanup Proof Storage (Fire-and-forget)
       if (reservation.payment_proof_url) {
@@ -119,7 +130,7 @@ export async function POST(req: NextRequest) {
         supabase.storage.from('payment_proofs').remove([reservation.payment_proof_url.split('/').pop()]).catch(console.error);
       }
 
-      await resend.emails.send({
+      const { error: emailError } = await resend.emails.send({
         from: 'Ayibuzz Media <contact@ayibuzz-media.com>',
         to: reservation.email,
         subject: 'Problème avec votre paiement - Ayibuzz Media',
@@ -133,6 +144,10 @@ export async function POST(req: NextRequest) {
           </div>
         `,
       });
+
+      if (emailError) {
+        throw new Error(`Failed to send rejection email via Resend: ${emailError.message}`);
+      }
 
       return NextResponse.json({ success: true });
     }

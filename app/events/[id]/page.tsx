@@ -32,7 +32,6 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 // ─── Session Card (Server) ─────────────────────────────────────────────────────
 function SessionCard({ session }: { session: any }) {
   const isConference = session.type === 'conference';
-  const primarySpeaker = session.session_speakers?.[0]?.speakers;
 
   return (
     <div className="glass p-5 border border-[var(--border-subtle)] bg-[var(--bg-card)] rounded-2xl">
@@ -52,16 +51,36 @@ function SessionCard({ session }: { session: any }) {
           <h3 className="text-base font-extrabold mb-2 text-[var(--text-primary)]">{session.title}</h3>
           <p className="text-sm text-[var(--text-secondary)] leading-relaxed mb-md">{session.description}</p>
           
-          {primarySpeaker && (
+          {session.session_speakers && session.session_speakers.length > 0 && (
             <div className="text-left flex items-center gap-sm border-t border-[var(--border-subtle)] pt-3">
-              <div className="w-7 h-7 rounded-full overflow-hidden border-[1.5px] border-white shadow-[0_0_0_3px_rgba(14, 26, 212, 0.04),0_1px_3px_rgba(0,0,0,0.1)] shrink-0 aspect-square relative">
-                <Image src={primarySpeaker.profile_image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${primarySpeaker.full_name}`} 
-                  alt={primarySpeaker.full_name}
-                  fill
-                  sizes="28px"
-                  className="object-cover object-[center_15%]" />
+              <div className="flex -space-x-2 overflow-visible">
+                {session.session_speakers.map((item: any, idx: number) => {
+                  const sp = item.speakers;
+                  if (!sp) return null;
+                  return (
+                    <div 
+                      key={`${session.id}-${item.speaker_id || sp.id || idx}`} 
+                      className="w-8 h-8 rounded-full border-2 border-white dark:border-slate-900 bg-white relative shrink-0 group"
+                    >
+                      <Image 
+                        src={sp.profile_image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${sp.full_name}`} 
+                        alt={sp.full_name}
+                        fill
+                        sizes="32px"
+                        className="object-cover rounded-full" 
+                      />
+                      <div className="absolute bottom-[125%] left-1/2 -translate-x-1/2 bg-[#0A0A0E] text-white text-[10px] px-2 py-1 rounded-md shadow hidden group-hover:block whitespace-nowrap z-50">
+                        {sp.full_name}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-              <span className="text-[13px] font-semibold text-[var(--text-primary)]">{primarySpeaker.full_name}</span>
+              <span className="text-[13px] font-semibold text-[var(--text-primary)] ml-2">
+                {session.session_speakers.length === 1 
+                  ? session.session_speakers[0].speakers?.full_name 
+                  : `${session.session_speakers.length} intervenants`}
+              </span>
             </div>
           )}
         </div>

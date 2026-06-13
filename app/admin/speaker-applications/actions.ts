@@ -1,13 +1,59 @@
 'use server';
 
 import { createClient } from '@/utils/supabase/server';
+import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 
-export async function updateApplicationStatus(id: string, status: 'approved' | 'rejected') {
+// Helper to verify that the logged-in user is an admin
+async function verifyAdmin() {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return false;
+  
+  const isSystemAdmin = 
+    session.user.email?.toLowerCase() === 'admin@uplift.io' || 
+    session.user.user_metadata?.role === 'admin';
+  return isSystemAdmin;
+}
 
+// Helper to get service role client that bypasses RLS
+function getServiceClient() {
+  return createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
+
+// Fetch all speaker applications (Admin only, RLS bypass)
+export async function getSpeakerApplications() {
+  const isAdmin = await verifyAdmin();
+  if (!isAdmin) {
+    return { error: 'Non autorisé' };
+  }
+
+  const supabase = getServiceClient();
+  const { data, error } = await supabase
+    .from('speaker_applications')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching applications with service role:', error);
+    return { error: 'Erreur lors du chargement des candidatures.' };
+  }
+
+  return { data };
+}
+
+export async function updateApplicationStatus(id: string, status: 'approved' | 'rejected') {
+  const isAdmin = await verifyAdmin();
+  if (!isAdmin) {
+    return { error: 'Non autorisé' };
+  }
+
+  const supabase = getServiceClient();
   const { error } = await supabase
     .from('speaker_applications')
     .update({ status })
@@ -23,8 +69,12 @@ export async function updateApplicationStatus(id: string, status: 'approved' | '
 }
 
 export async function promoteToSpeaker(applicationId: string) {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
+  const isAdmin = await verifyAdmin();
+  if (!isAdmin) {
+    return { error: 'Non autorisé' };
+  }
+
+  const supabase = getServiceClient();
 
   // 1. Get the application details
   const { data: application, error: fetchError } = await supabase
@@ -42,12 +92,12 @@ export async function promoteToSpeaker(applicationId: string) {
     return { error: "Cette candidature a déjà été approuvée." };
   }
 
-  // 1c. Check if a speaker with the same name or email already exists
+  // 1c. Check if a speaker with the same name already exists
   const { data: existingSpeaker } = await supabase
     .from('speakers')
     .select('id')
     .eq('full_name', application.full_name)
-    .single();
+    .maybeSingle();
 
   if (existingSpeaker) {
      // If speaker exists, just update the application status to approved but don't insert duplicate speaker
@@ -98,9 +148,12 @@ export async function promoteToSpeaker(applicationId: string) {
 }
 
 export async function toggleApplicationVisibility(id: string, published: boolean) {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
+  const isAdmin = await verifyAdmin();
+  if (!isAdmin) {
+    return { error: 'Non autorisé' };
+  }
 
+  const supabase = getServiceClient();
   const { error } = await supabase
     .from('speaker_applications')
     .update({ published })
@@ -117,9 +170,12 @@ export async function toggleApplicationVisibility(id: string, published: boolean
 }
 
 export async function toggleSpeakerVisibility(id: string, published: boolean) {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
+  const isAdmin = await verifyAdmin();
+  if (!isAdmin) {
+    return { error: 'Non autorisé' };
+  }
 
+  const supabase = getServiceClient();
   const { error } = await supabase
     .from('speakers')
     .update({ published })
@@ -136,9 +192,12 @@ export async function toggleSpeakerVisibility(id: string, published: boolean) {
 }
 
 export async function deleteApplication(id: string) {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
+  const isAdmin = await verifyAdmin();
+  if (!isAdmin) {
+    return { error: 'Non autorisé' };
+  }
 
+  const supabase = getServiceClient();
   const { error } = await supabase
     .from('speaker_applications')
     .delete()

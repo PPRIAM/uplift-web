@@ -4,6 +4,30 @@ import { createClient } from '@/utils/supabase/client';
 import { Plus, Edit, Trash2, Eye, EyeOff, Search, CheckCircle, X, RefreshCw, Upload, ImageIcon, Star, Radio } from 'lucide-react';
 import Link from 'next/link';
 import { formatDateShort } from '@/lib/dateUtils';
+import eventSuggestions from '@/config/event-suggestions.json';
+
+const parseMetadataArray = (val: any): string => {
+  if (!val) return '';
+  if (Array.isArray(val)) return val.join('\n');
+  if (typeof val === 'string') {
+    if (val.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(val);
+        if (Array.isArray(parsed)) return parsed.join('\n');
+      } catch (e) {}
+    }
+    return val;
+  }
+  return '';
+};
+
+const formatMetadataField = (text: string): string[] => {
+  if (!text) return [];
+  return text
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line.length > 0);
+};
 
 const toLocalISOString = (dateString: string | null | undefined) => {
   if (!dateString) return '';
@@ -34,6 +58,7 @@ export default function AdminEventsPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [speakers, setSpeakers] = useState<any[]>([]);
   const [selectedSpeakers, setSelectedSpeakers] = useState<string[]>([]);
+  const [selectedTheme, setSelectedTheme] = useState<string>('tech');
 
   // Cover image state
   const [coverFile, setCoverFile] = useState<File | null>(null);
@@ -147,6 +172,7 @@ export default function AdminEventsPage() {
     setForm({ name: '', tagline: '', location_name: '', location_details: '', city: '', date_time: '', end_date_time: '', description: '', capacity: 500, cover_image: '', is_featured: false, is_live: false, metadata_benefits: '', metadata_objectives: '', metadata_outcomes: '', metadata_audience: '' });
     resetCoverState();
     setSelectedSpeakers([]);
+    setSelectedTheme('tech');
     setShowModal(true);
   };
 
@@ -176,10 +202,10 @@ export default function AdminEventsPage() {
       cover_image: event.cover_image || '',
       is_featured: event.is_featured || false,
       is_live: event.is_live || false,
-      metadata_benefits: metadata.benefits || '',
-      metadata_objectives: metadata.objectives || '',
-      metadata_outcomes: metadata.outcomes || '',
-      metadata_audience: metadata.audience || '',
+      metadata_benefits: parseMetadataArray(metadata.benefits),
+      metadata_objectives: parseMetadataArray(metadata.objectives),
+      metadata_outcomes: parseMetadataArray(metadata.outcomes),
+      metadata_audience: parseMetadataArray(metadata.audience),
     });
     resetCoverState();
 
@@ -263,10 +289,10 @@ export default function AdminEventsPage() {
     }
 
     const metadataPayload = {
-      benefits: form.metadata_benefits,
-      objectives: form.metadata_objectives,
-      outcomes: form.metadata_outcomes,
-      audience: form.metadata_audience
+      benefits: formatMetadataField(form.metadata_benefits),
+      objectives: formatMetadataField(form.metadata_objectives),
+      outcomes: formatMetadataField(form.metadata_outcomes),
+      audience: formatMetadataField(form.metadata_audience)
     };
 
     const eventData: any = {
@@ -361,6 +387,65 @@ export default function AdminEventsPage() {
   };
 
   const statusBadge: Record<string, string> = { upcoming: 'badge-success', ongoing: 'badge-warning', past: 'badge-primary' };
+
+  const renderMetadataTextarea = (
+    label: string,
+    field: 'metadata_benefits' | 'metadata_objectives' | 'metadata_outcomes' | 'metadata_audience',
+    suggestionsKey: 'benefits' | 'objectives' | 'outcomes' | 'audience'
+  ) => {
+    const suggestions = (eventSuggestions as any)[selectedTheme]?.[suggestionsKey] || [];
+    
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+        <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>{label}</label>
+        <textarea
+          id={field}
+          value={form[field]}
+          onChange={e => setForm({ ...form, [field]: e.target.value })}
+          placeholder="Un élément par ligne..."
+          className="input-field"
+          rows={3}
+          style={{ resize: 'vertical' }}
+        />
+        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Un élément par ligne.</span>
+        {suggestions.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '2px' }}>
+            {suggestions.map((s: string, idx: number) => (
+              <span
+                key={idx}
+                onClick={() => {
+                  const currentValue = form[field] ? form[field].trim() : '';
+                  const newValue = currentValue ? `${currentValue}\n${s}` : s;
+                  setForm({ ...form, [field]: newValue });
+                  setTimeout(() => {
+                    document.getElementById(field)?.focus();
+                  }, 0);
+                }}
+                className="cursor-pointer text-[11px] px-2 py-0.5 rounded-full bg-[#F3F2FC] text-[var(--text-secondary)] hover:bg-[#6842ff]/15 transition-colors"
+                style={{
+                  backgroundColor: '#F3F2FC',
+                  color: 'var(--text-secondary)',
+                  fontSize: '11px',
+                  padding: '3px 8px',
+                  borderRadius: '9999px',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s',
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.backgroundColor = 'rgba(104, 66, 255, 0.15)';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.backgroundColor = '#F3F2FC';
+                }}
+              >
+                {s}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const currentCover = coverPreview || (removeCover ? null : form.cover_image) || null;
 
@@ -614,25 +699,31 @@ export default function AdminEventsPage() {
                 <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Lieu précis</label>
                 <input type="text" value={form.location_name} onChange={e => setForm({ ...form, location_name: e.target.value })} placeholder="Centre de conférence" className="input-field" />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div>
-                  <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Bénéfices</label>
-                  <input type="text" value={form.metadata_benefits} onChange={e => setForm({ ...form, metadata_benefits: e.target.value })} placeholder="ex: Networking..." className="input-field" />
-                </div>
-                <div>
-                  <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Objectifs</label>
-                  <input type="text" value={form.metadata_objectives} onChange={e => setForm({ ...form, metadata_objectives: e.target.value })} placeholder="ex: Sensibilisation..." className="input-field" />
-                </div>
+              {/* Thématique de l'événement pour suggestions */}
+              <div>
+                <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>
+                  Thématique de l'événement (pour suggestions)
+                </label>
+                <select
+                  value={selectedTheme}
+                  onChange={e => setSelectedTheme(e.target.value)}
+                  className="input-field"
+                >
+                  <option value="tech">Technologie & Innovation</option>
+                  <option value="culture">Culture & Art</option>
+                  <option value="leadership">Leadership & Citoyenneté</option>
+                  <option value="education">Éducation & Académique</option>
+                </select>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div>
-                  <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Résultats attendus</label>
-                  <input type="text" value={form.metadata_outcomes} onChange={e => setForm({ ...form, metadata_outcomes: e.target.value })} placeholder="ex: Plan d'action..." className="input-field" />
-                </div>
-                <div>
-                  <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Public cible</label>
-                  <input type="text" value={form.metadata_audience} onChange={e => setForm({ ...form, metadata_audience: e.target.value })} placeholder="ex: Étudiants..." className="input-field" />
-                </div>
+
+              {/* Textareas de Métadonnées */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                {renderMetadataTextarea('Bénéfices', 'metadata_benefits', 'benefits')}
+                {renderMetadataTextarea('Objectifs', 'metadata_objectives', 'objectives')}
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                {renderMetadataTextarea('Résultats attendus', 'metadata_outcomes', 'outcomes')}
+                {renderMetadataTextarea('Public cible', 'metadata_audience', 'audience')}
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>

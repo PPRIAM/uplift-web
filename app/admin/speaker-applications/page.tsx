@@ -6,7 +6,7 @@ import {
   CheckCircle, XCircle, Clock, Trash2, ExternalLink, 
   Search, RefreshCw, Mail, UserPlus, Eye, EyeOff 
 } from 'lucide-react';
-import { promoteToSpeaker, updateApplicationStatus, deleteApplication, toggleApplicationVisibility } from './actions';
+import { promoteToSpeaker, updateApplicationStatus, deleteApplication, toggleApplicationVisibility, getSpeakerApplications } from './actions';
 import { formatDateShort } from '@/lib/dateUtils';
 import { fr } from 'date-fns/locale';
 
@@ -24,11 +24,13 @@ export default function AdminSpeakerApplicationsPage() {
 
   const fetchApplications = useCallback(async () => {
     setLoading(true);
-    const supabase = createClient();
-    const query = supabase.from('speaker_applications').select('*').order('created_at', { ascending: false });
-    
-    const { data } = await query;
-    setApplications(data || []);
+    const res = await getSpeakerApplications();
+    if (res.error) {
+      alert(res.error);
+      setApplications([]);
+    } else {
+      setApplications(res.data || []);
+    }
     setLoading(false);
   }, []);
 

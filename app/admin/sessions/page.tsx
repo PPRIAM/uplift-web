@@ -33,6 +33,8 @@ export default function AdminSessionsPage() {
   const [showModal, setShowModal] = useState(false);
   const [editSession, setEditSession] = useState<any | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [speakerSearch, setSpeakerSearch] = useState('');
+  const [showSpeakerDropdown, setShowSpeakerDropdown] = useState(false);
   
   const [form, setForm] = useState({
     event_id: '',
@@ -41,7 +43,7 @@ export default function AdminSessionsPage() {
     type: 'conference' as SessionType,
     start_time: '',
     end_time: '',
-    speaker_id: '', // One speaker for simple UI
+    speaker_ids: [] as string[],
   });
 
   const fetchData = useCallback(async () => {
@@ -75,7 +77,17 @@ export default function AdminSessionsPage() {
 
   const openCreate = () => {
     setEditSession(null);
-    setForm({ event_id: events[0]?.id || '', title: '', description: '', type: 'conference', start_time: '', end_time: '', speaker_id: '' });
+    setForm({ 
+      event_id: events[0]?.id || '', 
+      title: '', 
+      description: '', 
+      type: 'conference', 
+      start_time: '', 
+      end_time: '', 
+      speaker_ids: [] 
+    });
+    setSpeakerSearch('');
+    setShowSpeakerDropdown(false);
     setShowModal(true);
   };
 
@@ -88,8 +100,10 @@ export default function AdminSessionsPage() {
       type: s.type as SessionType,
       start_time: toLocalISOString(s.start_time),
       end_time: toLocalISOString(s.end_time),
-      speaker_id: s.session_speakers?.[0]?.speaker_id || '',
+      speaker_ids: s.session_speakers ? s.session_speakers.map((item: any) => item.speaker_id) : [],
     });
+    setSpeakerSearch('');
+    setShowSpeakerDropdown(false);
     setShowModal(true);
   };
 
@@ -121,12 +135,13 @@ export default function AdminSessionsPage() {
       // Clear existing speakers for this session
       await supabase.from('session_speakers').delete().eq('session_id', sessionId);
       
-      // Add new speaker if selected
-      if (form.speaker_id) {
-        await supabase.from('session_speakers').insert({
+      // Add new speakers if selected
+      if (form.speaker_ids && form.speaker_ids.length > 0) {
+        const insertData = form.speaker_ids.map((id: string) => ({
           session_id: sessionId,
-          speaker_id: form.speaker_id
-        });
+          speaker_id: id
+        }));
+        await supabase.from('session_speakers').insert(insertData);
       }
     }
 
@@ -180,11 +195,31 @@ export default function AdminSessionsPage() {
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
-                {ses.session_speakers?.[0] && (
-                  <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <p style={{ fontSize: '12px', fontWeight: '600' }}>{ses.session_speakers[0].speakers?.full_name}</p>
-                    <img src={ses.session_speakers[0].speakers?.profile_image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${ses.session_speakers[0].speakers?.full_name}`} 
-                      style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
+                {ses.session_speakers && ses.session_speakers.length > 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', marginRight: '4px' }} className="flex -space-x-2">
+                      {ses.session_speakers.map((item: any, idx: number) => {
+                        const sp = item.speakers;
+                        if (!sp) return null;
+                        return (
+                          <div key={`${ses.id}-${item.speaker_id || sp.id || idx}`} className="relative group shrink-0">
+                            <img 
+                              src={sp.profile_image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${sp.full_name}`} 
+                              alt={sp.full_name}
+                              style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #FFFFFF' }}
+                            />
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block z-30 bg-black text-white text-[10px] px-2 py-1 rounded shadow whitespace-nowrap">
+                              {sp.full_name}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {ses.session_speakers.length === 1 && (
+                      <p style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-primary)' }}>
+                        {ses.session_speakers[0].speakers?.full_name}
+                      </p>
+                    )}
                   </div>
                 )}
                 <div style={{ display: 'flex', gap: '6px' }}>
@@ -219,7 +254,7 @@ export default function AdminSessionsPage() {
                 <label style={{ fontSize: '13px', fontWeight: '600', marginBottom: '6px', display: 'block' }}>Titre *</label>
                 <input type="text" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} className="input-field" />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
                 <div>
                   <label style={{ fontSize: '13px', fontWeight: '600', marginBottom: '6px', display: 'block' }}>Type</label>
                   <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value as SessionType })} className="input-field">
@@ -229,11 +264,137 @@ export default function AdminSessionsPage() {
                   </select>
                 </div>
                 <div>
-                  <label style={{ fontSize: '13px', fontWeight: '600', marginBottom: '6px', display: 'block' }}>Intervenant</label>
-                  <select value={form.speaker_id} onChange={e => setForm({ ...form, speaker_id: e.target.value })} className="input-field">
-                    <option value="">(Aucun)</option>
-                    {speakers.map(s => <option key={s.id} value={s.id}>{s.full_name}</option>)}
-                  </select>
+                  <label style={{ fontSize: '13px', fontWeight: '600', marginBottom: '6px', display: 'block' }}>Intervenants</label>
+                  
+                  {/* Selected Speaker Pills */}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px' }}>
+                    {form.speaker_ids.map(id => {
+                      const speaker = speakers.find(s => s.id === id);
+                      if (!speaker) return null;
+                      return (
+                        <span 
+                          key={id} 
+                          style={{ 
+                            display: 'inline-flex', 
+                            alignItems: 'center', 
+                            gap: '4px', 
+                            background: 'rgba(104, 66, 255, 0.1)', 
+                            color: '#6842FF', 
+                            fontSize: '12px', 
+                            padding: '4px 8px', 
+                            borderRadius: '9999px',
+                            border: '1px solid rgba(104, 66, 255, 0.2)'
+                          }}
+                        >
+                          {speaker.full_name}
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              setForm(f => ({
+                                ...f,
+                                speaker_ids: f.speaker_ids.filter(sid => sid !== id)
+                              }));
+                            }}
+                            style={{ 
+                              border: 'none', 
+                              background: 'transparent', 
+                              color: 'inherit', 
+                              cursor: 'pointer', 
+                              padding: 0,
+                              display: 'inline-flex',
+                              alignItems: 'center'
+                            }}
+                          >
+                            <X size={12} />
+                          </button>
+                        </span>
+                      );
+                    })}
+                    {form.speaker_ids.length === 0 && (
+                      <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Aucun intervenant sélectionné</span>
+                    )}
+                  </div>
+
+                  {/* Dropdown / Search Input */}
+                  <div style={{ position: 'relative' }}>
+                    <input 
+                      type="text"
+                      placeholder="Rechercher et sélectionner des intervenants..."
+                      value={speakerSearch}
+                      onChange={e => {
+                        setSpeakerSearch(e.target.value);
+                        setShowSpeakerDropdown(true);
+                      }}
+                      onFocus={() => setShowSpeakerDropdown(true)}
+                      className="input-field"
+                    />
+                    
+                    {showSpeakerDropdown && (
+                      <>
+                        {/* Overlay to close on click outside */}
+                        <div 
+                          style={{ position: 'fixed', inset: 0, zIndex: 40 }} 
+                          onClick={() => setShowSpeakerDropdown(false)} 
+                        />
+                        <div 
+                          style={{ 
+                            position: 'absolute', 
+                            top: '100%', 
+                            left: 0, 
+                            right: 0, 
+                            marginTop: '4px', 
+                            background: 'var(--bg-surface, #FFFFFF)', 
+                            border: '1px solid var(--border-default, #E2E8F0)', 
+                            borderRadius: '8px', 
+                            maxHeight: '200px', 
+                            overflowY: 'auto', 
+                            zIndex: 50,
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                          }}
+                        >
+                          {speakers
+                            .filter(s => s.full_name.toLowerCase().includes(speakerSearch.toLowerCase()))
+                            .map(s => {
+                              const isChecked = form.speaker_ids.includes(s.id);
+                              return (
+                                <label 
+                                  key={s.id} 
+                                  style={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    gap: '8px', 
+                                    padding: '8px 12px', 
+                                    cursor: 'pointer',
+                                    fontSize: '13px',
+                                    userSelect: 'none',
+                                    color: 'var(--text-primary)'
+                                  }}
+                                  className="hover:bg-slate-50 dark:hover:bg-slate-800"
+                                >
+                                  <input 
+                                    type="checkbox"
+                                    checked={isChecked}
+                                    onChange={() => {
+                                      const newIds = isChecked
+                                        ? form.speaker_ids.filter(id => id !== s.id)
+                                        : [...form.speaker_ids, s.id];
+                                      setForm(f => ({ ...f, speaker_ids: newIds }));
+                                    }}
+                                    style={{ cursor: 'pointer' }}
+                                  />
+                                  <span>{s.full_name}</span>
+                                </label>
+                              );
+                            })}
+                          {speakers.filter(s => s.full_name.toLowerCase().includes(speakerSearch.toLowerCase())).length === 0 && (
+                            <div style={{ padding: '8px 12px', fontSize: '12px', color: 'var(--text-muted)', textAlign: 'center' }}>
+                              Aucun résultat
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>

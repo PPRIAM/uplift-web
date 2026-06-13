@@ -141,11 +141,21 @@ export default function EventClient({ event, tickets }: EventClientProps) {
         {/* ── Places counter ───────────────────────────────────────────────── */}
         <div className="border-t border-[var(--border-subtle)] pt-md mb-md">
           {/* Price row */}
-          <div className="flex justify-between mb-sm">
-            <span className="text-xs md:text-sm text-[var(--text-muted)]">Prix</span>
-            <span className="text-lg font-extrabold text-[var(--brand-success)]">
-              {formatPrice(price, selectedTicketObj?.description)}
-            </span>
+          <div className="flex flex-col gap-1 mb-sm border-b border-[var(--border-subtle)]/50 pb-sm">
+            {qty > 1 && (
+              <div className="flex justify-between items-center text-xs text-[var(--text-muted)]">
+                <span>Prix unitaire</span>
+                <span>{formatPrice(price, selectedTicketObj?.description)}</span>
+              </div>
+            )}
+            <div className="flex justify-between items-center">
+              <span className="text-xs md:text-sm font-semibold text-[var(--text-secondary)]">
+                {qty > 1 ? `Total (${qty} places)` : 'Prix'}
+              </span>
+              <span className="text-lg font-extrabold text-[var(--brand-success)]">
+                {formatPrice(price * qty, selectedTicketObj?.description)}
+              </span>
+            </div>
           </div>
 
           {/* Quantity stepper */}

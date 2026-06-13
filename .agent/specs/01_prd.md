@@ -1,41 +1,57 @@
-# Product Requirements Document (PRD) - Ticket Currency & Automatic Ticket Creation
+# Product Requirements Document (PRD) - User Bro Global Agent
 
 ## 1. Objectives & Scoping
-The objective is to allow administrators to configure a ticket currency (USD or HTG) and automatically generate a default Standard ticket type matching the event's capacity when creating any new event.
 
-### Scope Checklist
+### 1.1 Purpose
+"User Bro" is an autonomous global agent that simulates a naive end-user interacting with and testing a target platform. Instead of performing standard QA checks, User Bro navigates using visual and accessibility cues, documents its internal cognitive process (monologue, confusion, frustrations), and evaluates UX quality based on a dynamic frustration state. It outputs a comprehensive technical and visual diagnostic dashboard.
 
-#### Must-Haves
-- **Currency Selection Option**: Add a Currency field (USD or HTG) in the ticket creation and edit modal.
-- **Currency Display Formatting**:
-  - Table listings in the admin ticket manager must render prices formatted with currency suffix/prefix (e.g., `$15` or `1 500 HTG`).
-  - Event detail page on the public site must display ticket types and pricing tiers in their respective currency.
-- **Auto-Ticket Creation**:
-  - Upon creating a new event, automatically insert a default ticket in the `tickets` table linked to the new event.
-  - Default ticket attributes: Name = "Standard", Price = 0, Currency = "USD", Quantity = Event Capacity, Allocation Mode = "standard", Available = true.
-
-#### Should-Haves
-- **Contextual Pricing Input**: Price inputs in the admin modal should display the selected currency symbol (e.g., `$` or `HTG`) as a label prefix/suffix to guide input.
-- **Improved Price Summary**: Replace the generic *Plusieurs prix (N)* display in the admin table with a more useful *À partir de X* (starting from price) representation formatted in the correct currency.
-
-#### Nice-to-Haves
-- **Multi-currency support in reservations**: Store the currency selected during user registration on the reservation object (currently default is free/USD).
+### 1.2 Scope of Features
+* **Must-Haves**:
+  - Naive cognitive walkthrough simulation using LLM-based navigation decision-making.
+  - Dynamic **Frustration Gauge (0-100)** modeled using specific weights for UX frictions.
+  - Customizable persona parameters at launch: `patience`, `tech_savviness`, and `click_speed`.
+  - Strict blacklist-based guardrails to prevent executing destructive or sensitive actions (e.g., Delete, Pay, Command).
+  - Hybrid Diagnostic Dashboard (Markdown report with annotated step-by-step screenshots, monologues, console/network error highlights, and Playwright video playback link).
+* **Should-Haves**:
+  - HTML or interactive Markdown output for easy local browsing of test storyboards.
+  - Intelligent form filler that inputs naive and boundary-test values based on field context.
+* **Nice-to-Haves**:
+  - Simulated chat assistance interaction (simulating a user asking a support widget for help when frustrated).
+  - Automated Slack/Discord notification with a link to the dashboard when a run fails due to frustration peak.
 
 ---
 
 ## 2. User Stories
 
-### Currency Settings for Ticket Types
-* **As an** event administrator,
-* **I want to** select the currency (USD or HTG) when creating or editing a ticket type,
-* **So that** attendees see prices in the local currency (HTG) or US Dollars (USD) depending on the ticket target.
+1. **Persona Injection**: As a developer/QA designer, I want to configure the agent's patience, tech-savviness, and click speed at launch so that I can simulate different demographics (e.g., an impatient professional vs. a confused novice).
+2. **Exploration & Navigation**: As a product manager, I want the agent to try to complete a user goal (e.g., "Change my profile name") without hardcoded selectors so that I can verify if the UI is intuitive to a real user.
+3. **Frustration Autopsy**: As a UX engineer, I want the agent to abort the test and provide a detailed report when its frustration reaches 100% so that I know exactly where the user journey broke down and why.
+4. **Hybrid Diagnosis**: As a frontend developer, I want the test report to include step-by-step screenshots with highlighted clicks, console exceptions, and network logs so that I can immediately debug layout anomalies or API failures.
 
-### Dynamic Pricing Display
-* **As a** visitor browsing an event,
-* **I want to** see the ticket prices and pricing tiers in the currency chosen by the admin,
-* **So that** I know exactly how much and in what currency I will be billed.
+---
 
-### Zero-Configuration Ticketing
-* **As an** event organizer creating a new event,
-* **I want** the system to automatically generate a standard ticket linked to the event's capacity,
-* **So that** I don't have to manually navigate to the ticket manager and configure a ticket before attendees can start reserving seats.
+## 3. Core Functionality & Specifications
+
+### 3.1 Customizable Personas
+The agent accepts the following configurations at launch:
+- `patience` (`0.0` to `1.0`): Frustration rate multiplier = `1.0 / patience` (capped at `5x`). Low patience (e.g., `0.2`) speeds up frustration accumulation.
+- `tech_savviness` (`0.0` to `1.0`): Controls icon recognition and navigation accuracy. Low tech-savviness ignores standard abstract icons (gear, trash) unless they have accompanying text labels.
+- `click_speed` (`'slow' | 'normal' | 'fast'`): Sets delays between steps and typing rates.
+
+### 3.2 Frustration Gauge
+The frustration score starts at `0` and increases/decreases based on page feedback:
+- Form validation error: `+15` to `+25`
+- No visual change after action: `+20`
+- Slow loading spinner (>2s): `+10` per second
+- Console / JavaScript error: `+30`
+- Failed network call (5xx): `+40`
+- Unexpected popups / modals blocking the view: `+15`
+- Successful page navigation or validation resolution: `-15`
+
+If frustration reaches `100`, the test is marked as `ABANDONED` and triggers an autopsy report.
+
+### 3.3 Security Guardrails
+If the target element to click contains any phrase in the blacklist (e.g., `["supprimer", "delete", "payer", "commander", "buy", "purge"]`):
+- The agent halts execution immediately.
+- It logs a safety warning.
+- It prompts the user for manual confirmation or skips the element to continue the walkthrough.
