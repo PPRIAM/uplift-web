@@ -49,7 +49,7 @@ export default function Footer() {
               Inscription à la Newsletter
             </h4>
             <p className="text-[#64748B] text-sm mb-4 leading-relaxed">
-              Recevez nos actualités et restez connecté avec l&apos;élan technologique d&apos;UPLIFT.
+              Recevez nos actualités et restez connecté avec l&apos;élan technologique d&apos;AYIBUZZ MÉDIA.
             </p>
             
             <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-3">
@@ -75,7 +75,7 @@ export default function Footer() {
         {/* Barre de pied de page avec séparateur franc */}
         <div className="border-t-[1.5px] border-[#0F172A]/10 pt-8 mt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
           <p className="text-[#64748B] text-sm font-medium">
-            © 2026 UPLIFT. Tous droits réservés.
+            © 2026 AYIBUZZ MÉDIA. Tous droits réservés.
           </p>
           
           <div className="flex gap-6">
