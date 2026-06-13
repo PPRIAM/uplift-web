@@ -34,8 +34,7 @@ export default function Footer() {
                 loading="lazy" 
                 width={140} 
                 height={40} 
-                style={{ filter: 'brightness(0) saturate(100%) invert(12%) sepia(95%) saturate(5833%) hue-rotate(242deg) brightness(88%) contrast(99%)' }}
-                className="text-transparent object-contain w-auto h-auto" 
+                className="object-contain w-auto h-auto" 
                 src="/logo.png"
               />
             </Link>

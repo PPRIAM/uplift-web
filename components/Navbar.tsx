@@ -73,8 +73,7 @@ export default function Navbar() {
                 alt="UPLIFT 2.0"
                 width={120}
                 height={36}
-                style={{ filter: 'brightness(0) saturate(100%) invert(12%) sepia(95%) saturate(5833%) hue-rotate(242deg) brightness(88%) contrast(99%)' }}
-                className="text-transparent object-contain w-auto h-auto"
+                className="object-contain w-auto h-auto"
                 priority
               />
             </Link>
