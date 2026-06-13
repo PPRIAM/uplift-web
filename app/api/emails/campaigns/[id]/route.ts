@@ -1,23 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { getSupabase } from '@/utils/supabase/admin';
 
-function getSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key || url.includes('dummy') || key === 'dummy_key' || key === 'dummy') {
-    if (process.env.NEXT_PHASE === 'phase-production-build') {
-      return createClient(url || 'https://dummy.supabase.co', key || 'dummy_key');
-    }
-    throw new Error('CONFIG_ERROR: NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY is missing/invalid.');
-  }
-  return createClient(url, key);
-}
-
-// ─── GET /api/emails/campaigns/[id] ─────────────────────────────────────────
+// ─── GET /api/emails/campaigns/[id] — Obtenir les détails d'une campagne ───────────────────
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Client Supabase centralisé
   const supabase = getSupabase();
   const { id } = await params;
   const { data, error } = await supabase
@@ -30,7 +19,7 @@ export async function GET(
     return NextResponse.json({ error: 'Campaign not found' }, { status: 404 });
   }
 
-  // Also get associated send logs
+  // Récupérer également les journaux d'envoi associés
   const { data: emails } = await supabase
     .from('email_messages')
     .select('id, to_emails, status, resend_id, sent_at, error_message')
@@ -40,7 +29,7 @@ export async function GET(
   return NextResponse.json({ campaign: data, emails: emails || [] });
 }
 
-// ─── PATCH /api/emails/campaigns/[id] ───────────────────────────────────────
+// ─── PATCH /api/emails/campaigns/[id] — Mettre à jour une campagne ───────────────────────────
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -80,7 +69,7 @@ export async function PATCH(
   return NextResponse.json({ campaign: data });
 }
 
-// ─── DELETE /api/emails/campaigns/[id] ──────────────────────────────────────
+// ─── DELETE /api/emails/campaigns/[id] — Supprimer une campagne ──────────────────────────────
 export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }

@@ -11,4 +11,5 @@ deploy-gcp.sh
 supabase_*.sql
 diagnose-reservations.mjs
 test-supabase.mjs
+scripts/diagnostics/
 prisma

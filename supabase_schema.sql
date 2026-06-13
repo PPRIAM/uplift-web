@@ -14,7 +14,8 @@ CREATE TABLE public.events (
     city TEXT,
     capacity INTEGER NOT NULL DEFAULT 500,
     registered_count INTEGER NOT NULL DEFAULT 0,
-    featured BOOLEAN NOT NULL DEFAULT false,
+    is_featured BOOLEAN NOT NULL DEFAULT false,
+    is_live BOOLEAN NOT NULL DEFAULT false,
     tags TEXT[] DEFAULT '{}',
     published BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP

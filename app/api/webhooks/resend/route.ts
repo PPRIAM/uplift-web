@@ -1,19 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-function getSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key || url.includes('dummy') || key === 'dummy_key' || key === 'dummy') {
-    if (process.env.NEXT_PHASE === 'phase-production-build') {
-      return createClient(url || 'https://dummy.supabase.co', key || 'dummy_key');
-    }
-    throw new Error('CONFIG_ERROR: NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY is missing/invalid.');
-  }
-  return createClient(url, key);
-}
+import { getSupabase } from '@/utils/supabase/admin';
 
 export async function POST(req: NextRequest) {
+  // Client Supabase centralisé
   const supabase = getSupabase();
   let payload: any;
   try {
@@ -22,7 +11,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  // Resend webhook format: { type: string, data: { email_id: string, ... } }
+  // Format du webhook Resend : { type: string, data: { email_id: string, ... } }
   const { type, data } = payload;
 
   if (!type || !data || !data.email_id) {
@@ -40,14 +29,14 @@ export async function POST(req: NextRequest) {
   } else if (type === 'email.opened') {
     updates.opened_at = new Date().toISOString();
   } else if (type === 'email.clicked') {
-    // Optionally track clicks if you add a clicked_at column in the future
+    // Optionnellement suivre les clics si vous ajoutez une colonne clicked_at à l'avenir
     updates.updated_at = new Date().toISOString();
   } else {
-    // Ignore other types
+    // Ignorer les autres types
     return NextResponse.json({ received: true });
   }
 
-  // Update email_messages table
+  // Mettre à jour la table email_messages
   const { error } = await supabase
     .from('email_messages')
     .update(updates)

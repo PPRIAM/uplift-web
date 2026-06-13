@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const envContent = fs.readFileSync(path.resolve(__dirname, './.env.local'), 'utf8');
+const envContent = fs.readFileSync(path.resolve(__dirname, '../../.env.local'), 'utf8');
 const env = {};
 envContent.split('\n').forEach(line => {
   const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);

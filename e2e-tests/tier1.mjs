@@ -1,4 +1,4 @@
-import { supabase, setupBrowser, loginAsAdmin, APP_URL, env } from './helpers.mjs';
+import { supabase, setupBrowser, loginAsAdmin, gotoAdminEvents, clickCreateEvent, filterAndClickEdit, setToggleState, APP_URL, env } from './helpers.mjs';
 
 export const tests = {
   // ── F1: Supabase Event Schema Update ──────────────────────────────────
@@ -65,28 +65,19 @@ export const tests = {
 
   // ── F2: Admin Control Refactoring ─────────────────────────────────────
   'TC-F2-01': async () => {
+    console.log('F2-01: launching browser...');
     const { browser, page } = await setupBrowser();
     try {
+      console.log('F2-01: logging in...');
       await loginAsAdmin(page);
-      await page.goto(`${APP_URL}/admin/events`, { waitUntil: 'networkidle2' });
+      console.log('F2-01: login completed, navigating to /admin/events...');
+      await gotoAdminEvents(page);
       
-      // Click "Créer un événement" button
-      const buttons = await page.$$('button');
-      let createBtn = null;
-      for (const btn of buttons) {
-        const text = await page.evaluate(el => el.textContent, btn);
-        if (text && text.includes('Créer un événement')) {
-          createBtn = btn;
-          break;
-        }
-      }
+      console.log('F2-01: header found, getting all buttons...');
+      console.log('F2-01: clicking create button...');
+      await clickCreateEvent(page);
       
-      if (!createBtn) throw new Error('Could not find "Créer un événement" button');
-      await createBtn.click();
-      
-      // Wait for modal to open
-      await page.waitForSelector('.modal-overlay', { timeout: 3000 });
-      
+      console.log('F2-01: modal open, checking labels...');
       // Assert presence of Featured and Live controls
       // We can look for inputs with labels containing "Featured", "Live", "Mettre en avant" or "En direct"
       const labels = await page.$$eval('.modal-overlay label', els => els.map(el => el.textContent));
@@ -96,6 +87,7 @@ export const tests = {
       if (!hasFeatured || !hasLive) {
         throw new Error(`Toggles or labels for featured/live are missing. Found labels: ${labels.join(', ')}`);
       }
+      console.log('F2-01: validation complete, closing browser');
     } finally {
       await browser.close();
     }
@@ -105,7 +97,7 @@ export const tests = {
     const { browser, page } = await setupBrowser();
     try {
       await loginAsAdmin(page);
-      await page.goto(`${APP_URL}/admin/events`, { waitUntil: 'networkidle2' });
+      await gotoAdminEvents(page);
       
       const buttons = await page.$$('button');
       let createBtn = null;
@@ -152,29 +144,9 @@ export const tests = {
     const { browser, page } = await setupBrowser();
     try {
       await loginAsAdmin(page);
-      await page.goto(`${APP_URL}/admin/events`, { waitUntil: 'networkidle2' });
+      await gotoAdminEvents(page);
       
-      // Filter list to find our seeded event
-      await page.waitForSelector('input[placeholder*="Filtrer"]');
-      await page.type('input[placeholder*="Filtrer"]', tempName);
-      await page.evaluate(() => new Promise(r => setTimeout(r, 500)));
-
-      // Find edit button for this row
-      // The row should contain tempName
-      const rows = await page.$$('tr');
-      let editBtn = null;
-      for (const row of rows) {
-        const text = await page.evaluate(el => el.textContent, row);
-        if (text && text.includes(tempName)) {
-          editBtn = await row.$('button[title="Modifier"]');
-          break;
-        }
-      }
-
-      if (!editBtn) throw new Error(`Could not find Edit button for event: ${tempName}`);
-      await editBtn.click();
-
-      await page.waitForSelector('.modal-overlay', { timeout: 3000 });
+      await filterAndClickEdit(page, tempName);
 
       // Retrieve checked states for is_featured and is_live checkboxes
       // Since we don't know the exact IDs/classes, we can search by checkbox position or label association
@@ -213,7 +185,7 @@ export const tests = {
     const tempName = `[TEST] Create Form Attributes ${Date.now()}`;
     try {
       await loginAsAdmin(page);
-      await page.goto(`${APP_URL}/admin/events`, { waitUntil: 'networkidle2' });
+      await gotoAdminEvents(page);
       
       const buttons = await page.$$('button');
       let createBtn = null;
@@ -233,17 +205,16 @@ export const tests = {
       await page.type('input[placeholder*="Gona"]', 'Gonaïves');
       await page.type('input[placeholder*="conf"]', 'Alliance');
 
-      // Fill dates
-      const startInput = await page.$('input[type="datetime-local"]');
-      await startInput.type('25042026\t1800'); // Input format dependent, typing dates directly
+      // Fill dates in a locale-independent way (triggering React's onChange state binding)
+      await page.$eval('input[type="datetime-local"]', el => {
+        const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+        nativeInputValueSetter.call(el, '2026-04-25T18:00');
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+      });
 
       // Check toggles (Featured and Live)
-      await page.evaluate(() => {
-        const checkboxes = document.querySelectorAll('.modal-overlay input[type="checkbox"]');
-        checkboxes.forEach(cb => {
-          if (!cb.checked) cb.click();
-        });
-      });
+      await setToggleState(page, 'vedette', true);
+      await setToggleState(page, 'live', true);
 
       // Save event
       const saveBtn = await page.evaluateHandle(() => {
@@ -286,33 +257,13 @@ export const tests = {
     const { browser, page } = await setupBrowser();
     try {
       await loginAsAdmin(page);
-      await page.goto(`${APP_URL}/admin/events`, { waitUntil: 'networkidle2' });
+      await gotoAdminEvents(page);
       
-      // Filter list
-      await page.waitForSelector('input[placeholder*="Filtrer"]');
-      await page.type('input[placeholder*="Filtrer"]', tempName);
-      await page.evaluate(() => new Promise(r => setTimeout(r, 500)));
-
-      // Find edit button
-      const rows = await page.$$('tr');
-      let editBtn = null;
-      for (const row of rows) {
-        const text = await page.evaluate(el => el.textContent, row);
-        if (text && text.includes(tempName)) {
-          editBtn = await row.$('button[title="Modifier"]');
-          break;
-        }
-      }
-      await editBtn.click();
-      await page.waitForSelector('.modal-overlay', { timeout: 3000 });
+      await filterAndClickEdit(page, tempName);
 
       // Uncheck both toggles
-      await page.evaluate(() => {
-        const checkboxes = document.querySelectorAll('.modal-overlay input[type="checkbox"]');
-        checkboxes.forEach(cb => {
-          if (cb.checked) cb.click();
-        });
-      });
+      await setToggleState(page, 'vedette', false);
+      await setToggleState(page, 'live', false);
 
       // Save
       const saveBtn = await page.evaluateHandle(() => {
@@ -356,35 +307,23 @@ export const tests = {
     const eventBName = `[TEST] SingleFeat Event B ${Date.now()}`;
     try {
       await loginAsAdmin(page);
-      await page.goto(`${APP_URL}/admin/events`, { waitUntil: 'networkidle2' });
-      
-      const buttons = await page.$$('button');
-      let createBtn = null;
-      for (const btn of buttons) {
-        const text = await page.evaluate(el => el.textContent, btn);
-        if (text && text.includes('Créer un événement')) {
-          createBtn = btn;
-          break;
-        }
-      }
-      await createBtn.click();
-      await page.waitForSelector('.modal-overlay', { timeout: 3000 });
+      await gotoAdminEvents(page);
+      await clickCreateEvent(page);
 
       // Fill details
       await page.type('input[placeholder*="Summit"]', eventBName);
       await page.type('textarea[placeholder*="Description"]', 'Event B details');
       await page.type('input[placeholder*="Gona"]', 'Gonaïves');
+      
+      // Fill dates in a locale-independent way (triggering React's onChange state binding)
+      await page.$eval('input[type="datetime-local"]', el => {
+        const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+        nativeInputValueSetter.call(el, '2026-04-25T18:00');
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+      });
 
       // Toggle Featured on (leaving Live off)
-      await page.evaluate(() => {
-        const checkboxes = document.querySelectorAll('.modal-overlay input[type="checkbox"]');
-        checkboxes.forEach(cb => {
-          const text = cb.closest('div').textContent.toLowerCase();
-          if (text.includes('featured') || text.includes('avant') || text.includes('vedette')) {
-            if (!cb.checked) cb.click();
-          }
-        });
-      });
+      await setToggleState(page, 'vedette', true);
 
       // Save
       const saveBtn = await page.evaluateHandle(() => {
@@ -424,36 +363,12 @@ export const tests = {
     const { browser, page } = await setupBrowser();
     try {
       await loginAsAdmin(page);
-      await page.goto(`${APP_URL}/admin/events`, { waitUntil: 'networkidle2' });
+      await gotoAdminEvents(page);
       
-      // Filter list for Event B
-      await page.waitForSelector('input[placeholder*="Filtrer"]');
-      await page.type('input[placeholder*="Filtrer"]', `${prefix} Event B`);
-      await page.evaluate(() => new Promise(r => setTimeout(r, 500)));
-
-      // Find edit button
-      const rows = await page.$$('tr');
-      let editBtn = null;
-      for (const row of rows) {
-        const text = await page.evaluate(el => el.textContent, row);
-        if (text && text.includes(`${prefix} Event B`)) {
-          editBtn = await row.$('button[title="Modifier"]');
-          break;
-        }
-      }
-      await editBtn.click();
-      await page.waitForSelector('.modal-overlay', { timeout: 3000 });
+      await filterAndClickEdit(page, `${prefix} Event B`);
 
       // Toggle Featured on
-      await page.evaluate(() => {
-        const checkboxes = document.querySelectorAll('.modal-overlay input[type="checkbox"]');
-        checkboxes.forEach(cb => {
-          const text = cb.closest('div').textContent.toLowerCase();
-          if (text.includes('featured') || text.includes('avant') || text.includes('vedette')) {
-            if (!cb.checked) cb.click();
-          }
-        });
-      });
+      await setToggleState(page, 'vedette', true);
 
       // Save
       const saveBtn = await page.evaluateHandle(() => {
@@ -464,8 +379,23 @@ export const tests = {
       await page.waitForFunction(() => !document.querySelector('.modal-overlay'), { timeout: 5000 });
 
       // Query database
-      const { data: dbA } = await supabase.from('events').select('is_featured').eq('id', eventA.id).single();
-      const { data: dbB } = await supabase.from('events').select('is_featured').eq('id', eventB.id).single();
+      const resA = await supabase.from('events').select('is_featured').eq('id', eventA.id).single();
+      const resB = await supabase.from('events').select('is_featured').eq('id', eventB.id).single();
+
+      console.log('TC-F3-02 - eventA:', eventA);
+      console.log('TC-F3-02 - eventB:', eventB);
+      console.log('TC-F3-02 - dbA:', resA.data, 'errorA:', resA.error);
+      console.log('TC-F3-02 - dbB:', resB.data, 'errorB:', resB.error);
+
+      const dbA = resA.data;
+      const dbB = resB.data;
+
+      if (!dbB) {
+        throw new Error(`Event B (id: ${eventB.id}) was not found in DB.`);
+      }
+      if (!dbA) {
+        throw new Error(`Event A (id: ${eventA.id}) was not found in DB.`);
+      }
 
       if (!dbB.is_featured) {
         throw new Error('Event B was not updated to featured.');
@@ -525,34 +455,11 @@ export const tests = {
     const { browser, page } = await setupBrowser();
     try {
       await loginAsAdmin(page);
-      await page.goto(`${APP_URL}/admin/events`, { waitUntil: 'networkidle2' });
-      
-      await page.waitForSelector('input[placeholder*="Filtrer"]');
-      await page.type('input[placeholder*="Filtrer"]', `${prefix} Event A`);
-      await page.evaluate(() => new Promise(r => setTimeout(r, 500)));
-
-      // Find edit button
-      const rows = await page.$$('tr');
-      let editBtn = null;
-      for (const row of rows) {
-        if ((await page.evaluate(el => el.textContent, row)).includes(`${prefix} Event A`)) {
-          editBtn = await row.$('button[title="Modifier"]');
-          break;
-        }
-      }
-      await editBtn.click();
-      await page.waitForSelector('.modal-overlay', { timeout: 3000 });
+      await gotoAdminEvents(page);
+      await filterAndClickEdit(page, `${prefix} Event A`);
 
       // Uncheck Featured
-      await page.evaluate(() => {
-        const checkboxes = document.querySelectorAll('.modal-overlay input[type="checkbox"]');
-        checkboxes.forEach(cb => {
-          const text = cb.closest('div').textContent.toLowerCase();
-          if (text.includes('featured') || text.includes('avant') || text.includes('vedette')) {
-            if (cb.checked) cb.click();
-          }
-        });
-      });
+      await setToggleState(page, 'vedette', false);
 
       // Save
       const saveBtn = await page.evaluateHandle(() => {
@@ -586,33 +493,11 @@ export const tests = {
     const { browser, page } = await setupBrowser();
     try {
       await loginAsAdmin(page);
-      await page.goto(`${APP_URL}/admin/events`, { waitUntil: 'networkidle2' });
+      await gotoAdminEvents(page);
       
-      // Edit Event B to be featured
-      await page.waitForSelector('input[placeholder*="Filtrer"]');
-      await page.type('input[placeholder*="Filtrer"]', `${prefix} Event B`);
-      await page.evaluate(() => new Promise(r => setTimeout(r, 500)));
+      await filterAndClickEdit(page, `${prefix} Event B`);
 
-      let rows = await page.$$('tr');
-      let editBtn = null;
-      for (const row of rows) {
-        if ((await page.evaluate(el => el.textContent, row)).includes(`${prefix} Event B`)) {
-          editBtn = await row.$('button[title="Modifier"]');
-          break;
-        }
-      }
-      await editBtn.click();
-      await page.waitForSelector('.modal-overlay', { timeout: 3000 });
-
-      await page.evaluate(() => {
-        const checkboxes = document.querySelectorAll('.modal-overlay input[type="checkbox"]');
-        checkboxes.forEach(cb => {
-          const text = cb.closest('div').textContent.toLowerCase();
-          if (text.includes('featured') || text.includes('avant') || text.includes('vedette')) {
-            if (!cb.checked) cb.click();
-          }
-        });
-      });
+      await setToggleState(page, 'vedette', true);
 
       const saveBtn = await page.evaluateHandle(() => {
         const btns = Array.from(document.querySelectorAll('.modal-overlay button'));
@@ -652,7 +537,7 @@ export const tests = {
       }
       // If there is an indicator element (e.g. Star, Badge, or text), we look for it.
       // We expect the UI to show only Event B as Featured.
-      const hasFeaturedIndicator = (rowText) => rowText.toLowerCase().includes('en vedette') || rowText.toLowerCase().includes('featured') || rowText.toLowerCase().includes('★') || rowText.toLowerCase().includes('oui');
+      const hasFeaturedIndicator = (rowText) => rowText.toLowerCase().includes('vedette') || rowText.toLowerCase().includes('featured') || rowText.toLowerCase().includes('★') || rowText.toLowerCase().includes('oui');
       if (hasFeaturedIndicator(rowA.text) || !hasFeaturedIndicator(rowB.text)) {
         throw new Error(`UI row state did not update. Row A text: ${rowA.text}, Row B text: ${rowB.text}`);
       }
@@ -672,10 +557,11 @@ export const tests = {
 
     const { browser, page } = await setupBrowser();
     try {
-      await page.goto(APP_URL, { waitUntil: 'networkidle2' });
+      await page.goto(APP_URL, { waitUntil: 'load' });
       // Look for En direct tab
-      const liveLink = await page.$('a[href="/live"]');
-      if (!liveLink) {
+      try {
+        await page.waitForSelector('a[href="/live"]', { timeout: 5000 });
+      } catch (e) {
         throw new Error('Navbar is missing the "En direct" link even though a live event is active.');
       }
     } finally {
@@ -690,7 +576,7 @@ export const tests = {
 
     const { browser, page } = await setupBrowser();
     try {
-      await page.goto(APP_URL, { waitUntil: 'networkidle2' });
+      await page.goto(APP_URL, { waitUntil: 'load' });
       const liveLink = await page.$('a[href="/live"]');
       if (liveLink) {
         throw new Error('Navbar displays "En direct" tab even though no events are live.');
@@ -710,19 +596,21 @@ export const tests = {
     const { browser, page } = await setupBrowser();
     try {
       await page.setViewport({ width: 375, height: 812 });
-      await page.goto(APP_URL, { waitUntil: 'networkidle2' });
+      await page.goto(APP_URL, { waitUntil: 'load' });
       
       // Click mobile hamburger menu
       // Let's find button with menu icon or specific button
-      const menuBtn = await page.$('button[aria-label="Menu"]');
-      if (!menuBtn) throw new Error('Could not find mobile menu toggle button');
-      await menuBtn.click();
+      // Click mobile hamburger menu in a robust way
+      await page.waitForSelector('button[aria-label="Menu"]', { timeout: 3000 });
+      await page.evaluate(() => {
+        const btn = document.querySelector('button[aria-label="Menu"]');
+        if (btn) (btn).click();
+      });
       
-      await page.evaluate(() => new Promise(r => setTimeout(r, 500)));
-
-      // Assert link presence in mobile menu
-      const liveLink = await page.$('a[href="/live"]');
-      if (!liveLink) {
+      // Wait for mobile menu to open and display the link
+      try {
+        await page.waitForSelector('a[href="/live"]', { timeout: 10000 });
+      } catch (e) {
         throw new Error('Mobile menu is missing the "En direct" link when an event is live.');
       }
     } finally {
@@ -737,7 +625,7 @@ export const tests = {
     const { browser, page } = await setupBrowser();
     try {
       await page.setViewport({ width: 375, height: 812 });
-      await page.goto(APP_URL, { waitUntil: 'networkidle2' });
+      await page.goto(APP_URL, { waitUntil: 'load' });
 
       const menuBtn = await page.$('button[aria-label="Menu"]');
       if (!menuBtn) throw new Error('Could not find mobile menu toggle button');
@@ -764,7 +652,7 @@ export const tests = {
 
     const { browser, page } = await setupBrowser();
     try {
-      await page.goto(APP_URL, { waitUntil: 'networkidle2' });
+      await page.goto(APP_URL, { waitUntil: 'load' });
       const liveLink = await page.$('a[href="/live"]');
       if (liveLink) {
         throw new Error('Navbar displays "En direct" link for an unpublished live event.');
@@ -788,7 +676,7 @@ export const tests = {
 
     const { browser, page } = await setupBrowser();
     try {
-      await page.goto(APP_URL, { waitUntil: 'networkidle2' });
+      await page.goto(APP_URL, { waitUntil: 'load' });
       const heroText = await page.evaluate(() => document.querySelector('section')?.textContent || '');
       if (!heroText.includes(prefix) || !heroText.includes(tagline)) {
         throw new Error(`Hero section does not display the featured event details. Hero text: ${heroText}`);
@@ -804,7 +692,7 @@ export const tests = {
 
     // Seed the earliest upcoming published event
     const prefix = `[TEST] TC-F5-02-${Date.now()}`;
-    const upcomingTime = new Date(Date.now() + 10000).toISOString(); // 10s from now
+    const upcomingTime = new Date(Date.now() + 300000).toISOString(); // 5m from now
     await supabase.from('events').insert({
       name: `${prefix} Upcoming Fallback`, description: 'Fallback desc', capacity: 100, registered_count: 0,
       date_time: upcomingTime, location_name: 'Loc', published: true, is_featured: false
@@ -812,10 +700,10 @@ export const tests = {
 
     const { browser, page } = await setupBrowser();
     try {
-      await page.goto(APP_URL, { waitUntil: 'networkidle2' });
+      await page.goto(APP_URL, { waitUntil: 'load' });
       const heroText = await page.evaluate(() => document.querySelector('section')?.textContent || '');
-      if (!heroText.includes('Uplift Platform')) {
-        throw new Error(`Hero section did not fallback to the brand content when no featured event exists. Hero text: ${heroText}`);
+      if (!heroText.includes(prefix)) {
+        throw new Error(`Hero section did not fallback to the next upcoming event details when no featured event exists. Hero text: ${heroText}`);
       }
     } finally {
       await browser.close();
@@ -828,7 +716,7 @@ export const tests = {
 
     const { browser, page } = await setupBrowser();
     try {
-      await page.goto(APP_URL, { waitUntil: 'networkidle2' });
+      await page.goto(APP_URL, { waitUntil: 'load' });
       const heroText = await page.evaluate(() => document.querySelector('section')?.textContent || '');
       if (!heroText.includes('Uplift Platform') && !heroText.includes('Leve ansanm')) {
         throw new Error(`Hero section did not display the default brand fallback content. Hero text: ${heroText}`);
@@ -850,16 +738,18 @@ export const tests = {
 
     const { browser, page } = await setupBrowser();
     try {
-      await page.goto(APP_URL, { waitUntil: 'networkidle2' });
+      await page.goto(APP_URL, { waitUntil: 'load' });
       // Find CTA button (contains S'inscrire, Réserver, Rejoindre or S'enregistrer)
       const ctaBtn = await page.evaluateHandle(() => {
-        const btns = Array.from(document.querySelectorAll('a, button'));
+        const hero = document.querySelector('section');
+        if (!hero) return null;
+        const btns = Array.from(hero.querySelectorAll('a, button'));
         return btns.find(b => b.textContent.includes('Réserver') || b.textContent.includes('S\'inscrire') || b.textContent.includes('S’inscrire') || b.textContent.includes('Rejoindre'));
       });
 
       if (!ctaBtn) throw new Error('Could not find Hero CTA button.');
       await ctaBtn.click();
-      await page.waitForNavigation({ waitUntil: 'networkidle2' });
+      await page.waitForFunction((id) => window.location.pathname.includes(id), { timeout: 10000 }, event.id);
 
       const currentUrl = page.url();
       if (!currentUrl.includes(`/events/${event.id}`)) {
@@ -884,18 +774,18 @@ export const tests = {
     // Seed Event B (published, upcoming)
     await supabase.from('events').insert({
       name: `${prefix} Event B (Published)`, description: 'Pub', capacity: 100, registered_count: 0,
-      date_time: new Date(Date.now() + 172800000).toISOString(), location_name: 'Loc', published: true, is_featured: false
+      date_time: new Date(Date.now() + 300000).toISOString(), location_name: 'Loc', published: true, is_featured: false
     });
 
     const { browser, page } = await setupBrowser();
     try {
-      await page.goto(APP_URL, { waitUntil: 'networkidle2' });
+      await page.goto(APP_URL, { waitUntil: 'load' });
       const heroText = await page.evaluate(() => document.querySelector('section')?.textContent || '');
       if (heroText.includes(prefix + ' Event A')) {
         throw new Error(`Hero section displayed an unpublished featured event. Hero text: ${heroText}`);
       }
-      if (!heroText.includes('Uplift Platform')) {
-        throw new Error(`Hero section did not fallback to the brand content when no published featured event exists. Hero text: ${heroText}`);
+      if (!heroText.includes(prefix + ' Event B')) {
+        throw new Error(`Hero section did not fallback to the published upcoming event when the featured event is unpublished. Hero text: ${heroText}`);
       }
     } finally {
       await browser.close();

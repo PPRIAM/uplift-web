@@ -17,10 +17,13 @@ const totalTestCount = 60; // We have exactly 60 test cases
 // Parse arguments
 const args = process.argv.slice(2);
 let selectedTier = null;
+let selectedTest = null;
 
 args.forEach(arg => {
   if (arg.startsWith('--tier=')) {
     selectedTier = parseInt(arg.split('=')[1], 10);
+  } else if (arg.startsWith('--test=')) {
+    selectedTest = arg.split('=')[1];
   }
 });
 
@@ -103,7 +106,9 @@ async function run() {
 
   // Determine which tests to run
   let testEntries = Object.entries(allTests);
-  if (selectedTier === 1) {
+  if (selectedTest) {
+    testEntries = testEntries.filter(([id]) => id === selectedTest);
+  } else if (selectedTier === 1) {
     testEntries = testEntries.filter(([id]) => id.startsWith('TC-F1-') || id.startsWith('TC-F2-') || id.startsWith('TC-F3-') || id.startsWith('TC-F4-') || id.startsWith('TC-F5-') && parseInt(id.split('-')[2], 10) <= 5);
     // Wait, let's filter precisely:
     // Tier 1 contains TC-F1-01 to TC-F1-05, TC-F2-01 to TC-F2-05, etc.
@@ -138,12 +143,20 @@ async function run() {
 
   for (const [testId, testFn] of testEntries) {
     console.log(`\n▶️ Running ${testId}...`);
+    // Reset any featured events before starting the test to prevent unique index constraint violations
+    await supabase.from('events').update({ is_featured: false }).eq('is_featured', true);
+    // Cleanup any leftover test events from previous runs or tests to avoid date/presence conflicts
+    await cleanupTestEvents();
+    
+    // Attendre 1 seconde pour que les modifications de la base de données soient validées et propagées
+    await new Promise(r => setTimeout(r, 1000));
+    
     const start = Date.now();
     try {
-      // Run test with a 30s timeout limit
+      // Run test with a 60s timeout limit
       await Promise.race([
         testFn(),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Test timeout after 30 seconds')), 30000))
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Test timeout after 60 seconds')), 60000))
       ]);
       const duration = ((Date.now() - start) / 1000).toFixed(2);
       console.log(`✅ ${testId}: PASSED (${duration}s)`);

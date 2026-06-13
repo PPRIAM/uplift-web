@@ -1,22 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
+import { getSupabase } from '@/utils/supabase/admin';
 
-function getSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key || url.includes('dummy') || key === 'dummy_key' || key === 'dummy') {
-    if (process.env.NEXT_PHASE === 'phase-production-build') {
-      return createClient(url || 'https://dummy.supabase.co', key || 'dummy_key');
-    }
-    throw new Error('CONFIG_ERROR: NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY is missing/invalid.');
-  }
-  return createClient(url, key);
-}
 const resend = new Resend(process.env.RESEND_API_KEY);
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
-// Strip HTML tags to generate a plain-text fallback
+// Supprimer les balises HTML pour générer un texte brut de secours
 function stripHtml(html: string): string {
   return html
     .replace(/<br\s*\/?>/gi, '\n')
@@ -34,7 +23,7 @@ function stripHtml(html: string): string {
     .trim();
 }
 
-// Personalization token replacement
+// Remplacement des jetons de personnalisation
 const TOKEN_REGEX = /\{\{([^}]+)\}\}/g;
 function replaceTokens(
   html: string,
@@ -45,11 +34,12 @@ function replaceTokens(
   });
 }
 
-// Small delay helper
+// Petit utilitaire de délai (pause)
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-// ─── POST /api/emails/send-bulk — Bulk email send using Batch API ────────────
+// ─── POST /api/emails/send-bulk — Envoi groupé d'e-mails à l'aide de l'API Batch ────────────
 export async function POST(req: NextRequest) {
+  // Client Supabase centralisé
   const supabase = getSupabase();
   let body: Record<string, unknown>;
   try {
@@ -65,7 +55,7 @@ export async function POST(req: NextRequest) {
     from_email,
     from_name,
     event_id,
-    recipients, // Array of { email: string, full_name: string, ...extra token data }
+    recipients, // Tableau de { email: string, full_name: string, ...autres données de jeton }
   } = body as {
     campaign_id?: string;
     subject?: string;
@@ -87,7 +77,7 @@ export async function POST(req: NextRequest) {
   const senderEmail = from_email || 'contact@ayibuzz-media.com';
   const senderName = from_name || 'Ayibuzz Media';
 
-  // If campaign exists, update status to 'sending'
+  // Si la campagne existe, mettre à jour le statut en 'sending'
   if (campaign_id) {
     await supabase
       .from('email_campaigns')
@@ -105,7 +95,7 @@ export async function POST(req: NextRequest) {
   let failedCount = 0;
   const results: Array<{ email: string; success: boolean; error?: string; resend_id?: string }> = [];
 
-  // Prepare all payloads
+  // Préparer toutes les charges utiles (payloads)
   const allPayloads = recipients.map(recipient => {
     const tokenData: Record<string, string> = {
       full_name: recipient.full_name || '',
@@ -142,7 +132,7 @@ export async function POST(req: NextRequest) {
     };
   });
 
-  // Resend Batch API allows up to 100 emails per request
+  // L'API Resend Batch permet jusqu'à 100 e-mails par requête
   const BATCH_SIZE = 100;
   for (let i = 0; i < allPayloads.length; i += BATCH_SIZE) {
     const chunk = allPayloads.slice(i, i + BATCH_SIZE);
@@ -153,7 +143,7 @@ export async function POST(req: NextRequest) {
       const batchResult = await resend.batch.send(resendBatchPayload);
       
       if (batchResult.error) {
-        // Entire batch failed
+        // Tout le lot a échoué
         failedCount += chunk.length;
         chunk.forEach(p => {
           results.push({ email: p.recipient.email, success: false, error: batchResult.error?.message });
@@ -167,8 +157,8 @@ export async function POST(req: NextRequest) {
           });
         });
       } else {
-        // Process individual results
-        // Resend batch result format: data.data is an array of objects { id: string }
+        // Traiter les résultats individuels
+        // Format du résultat de lot Resend : data.data est un tableau d'objets { id: string }
         const returnedIds = (batchResult.data as any)?.data || batchResult.data || [];
         
         chunk.forEach((p, index) => {
@@ -218,14 +208,14 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Bulk insert logs to Supabase
+    // Insérer en masse les journaux dans Supabase
     if (dbLogsToInsert.length > 0) {
       await supabase.from('email_messages').insert(dbLogsToInsert);
     }
 
-    // Update campaign progress periodically
-    // We update every 5 chunks (500 emails) or on the last chunk,
-    // solving the N+1 blocking issue while retaining real-time progress.
+    // Mettre à jour périodiquement la progression de la campagne
+    // Nous mettons à jour tous les 5 lots (500 e-mails) ou au dernier lot,
+    // ce qui résout le problème de blocage N+1 tout en conservant la progression en temps réel.
     if (campaign_id && (i % (BATCH_SIZE * 5) === 0 || i + BATCH_SIZE >= allPayloads.length)) {
       await supabase
         .from('email_campaigns')
@@ -233,13 +223,13 @@ export async function POST(req: NextRequest) {
         .eq('id', campaign_id);
     }
 
-    // Small delay between batches to respect overall account rate limits (e.g. 10 req/sec)
+    // Petit délai entre les lots pour respecter les limites de débit du compte (ex. 10 requêtes/sec)
     if (i + BATCH_SIZE < allPayloads.length) {
       await delay(500); 
     }
   }
 
-  // Mark campaign as completed
+  // Marquer la campagne comme terminée
   if (campaign_id) {
     await supabase
       .from('email_campaigns')

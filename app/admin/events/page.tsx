@@ -216,6 +216,11 @@ export default function AdminEventsPage() {
     setActionLoading('save');
     setCoverUploading(true);
     const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      window.location.href = '/auth/login';
+      return;
+    }
 
     // Determine final cover_image URL
     let finalCoverImage = form.cover_image;

@@ -10,6 +10,10 @@ const supabaseKey =
  * Pratique pour les requêtes publiques rapides côté serveur qui ne requièrent pas de session utilisateur ou de cookies (ex. listes d'événements publics).
  */
 export const createPublicClient = () => {
-  return createClient(supabaseUrl!, supabaseKey!);
+  return createClient(supabaseUrl!, supabaseKey!, {
+    global: {
+      fetch: (url, options) => fetch(url, { ...options, cache: 'no-store' })
+    }
+  });
 };
 

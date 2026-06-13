@@ -1,20 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { getSupabase } from '@/utils/supabase/admin';
 
-function getSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key || url.includes('dummy') || key === 'dummy_key' || key === 'dummy') {
-    if (process.env.NEXT_PHASE === 'phase-production-build') {
-      return createClient(url || 'https://dummy.supabase.co', key || 'dummy_key');
-    }
-    throw new Error('CONFIG_ERROR: NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY is missing/invalid.');
-  }
-  return createClient(url, key);
-}
-
-// ─── GET /api/emails/campaigns — List all campaigns ─────────────────────────
+// ─── GET /api/emails/campaigns — Lister toutes les campagnes ─────────────────────────
 export async function GET(req: NextRequest) {
+  // Client Supabase centralisé
   const supabase = getSupabase();
   const { searchParams } = new URL(req.url);
   const status = searchParams.get('status');
@@ -37,7 +26,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ campaigns: data || [] });
 }
 
-// ─── POST /api/emails/campaigns — Create campaign ───────────────────────────
+// ─── POST /api/emails/campaigns — Créer une campagne ───────────────────────────
 export async function POST(req: NextRequest) {
   const supabase = getSupabase();
   let body: Record<string, unknown>;

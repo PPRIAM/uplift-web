@@ -15,6 +15,7 @@ interface HeroSectionProps {
   inscritsCount: number;
   placesRestantes: number;
   isAyibuzzMedia?: boolean;
+  isLive?: boolean;
 }
 
 // Section Hero d'accueil UPLIFT 2.0 (conception asymétrique et compacte)
@@ -30,6 +31,7 @@ export default function HeroSection({
   inscritsCount,
   placesRestantes,
   isAyibuzzMedia = false,
+  isLive = false,
 }: HeroSectionProps) {
   return (
     <section 
@@ -44,14 +46,26 @@ export default function HeroSection({
           {/* Bloc de gauche : Contenu textuel et actions (7 colonnes) */}
           <div className="lg:col-span-7 flex flex-col items-start text-left">
             
-            {/* Badge de l'organisateur et de la ville 
-            <div className="animate-fade-in-up inline-flex items-center gap-2 bg-[#0E1AD4]/10 border border-[#0E1AD4]/20 rounded-full py-1.5 px-4 mb-6">
-              <div className="w-2 h-2 rounded-full bg-[#0E1AD4] animate-pulse-glow"></div>
-              <span className="text-[11px] font-bold tracking-widest uppercase text-[#0E1AD4] font-body">
-                {isAyibuzzMedia ? "Uplift Platform" : `${organizerName} • ${cityName}`}
-              </span>
+            {/* Badge de l'organisateur et de la ville (et Badge En direct si Live) */}
+            <div className="flex flex-wrap items-center gap-3 mb-6">
+              <div className="animate-fade-in-up inline-flex items-center gap-2 bg-[#0E1AD4]/10 border border-[#0E1AD4]/20 rounded-full py-1.5 px-4">
+                <div className="w-2 h-2 rounded-full bg-[#0E1AD4] animate-pulse-glow"></div>
+                <span className="text-[11px] font-bold tracking-widest uppercase text-[#0E1AD4] font-body">
+                  {isAyibuzzMedia ? "Uplift Platform" : `${organizerName} • ${cityName}`}
+                </span>
+              </div>
+              {isLive && (
+                <div className="animate-fade-in-up inline-flex items-center gap-2 bg-red-100 border border-red-200 rounded-full py-1.5 px-4">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                  </span>
+                  <span className="text-[11px] font-bold tracking-widest uppercase text-red-600 font-body">
+                    En direct
+                  </span>
+                </div>
+              )}
             </div>
-            */}
             {/* Titre héroïque principal en font-display de l'Agent 2 */}
             <h1 className="font-display animate-fade-in-up animate-delay-100 text-[clamp(42px,5vw,72px)] font-black text-[#0F172A] tracking-[-0.03em] leading-[0.95] mb-4 uppercase">
               {isAyibuzzMedia ? "Leve ansanm, Briye ansanm" : eventName}

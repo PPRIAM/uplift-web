@@ -22,7 +22,7 @@ export interface TicketForStats {
 }
 
 /**
- * Calculates reservation and ticket capacity statistics for an event.
+ * Calcule les statistiques de réservation et de capacité de billets pour un événement.
  */
 export function calculateTicketStats(event: EventForStats, tickets: TicketForStats[]): TicketStats {
   const daysUntil = Math.max(
@@ -66,7 +66,7 @@ export function calculateTicketStats(event: EventForStats, tickets: TicketForSta
 }
 
 /**
- * Generates a random ticket code given user initials.
+ * Génère un code de billet unique basé sur les initiales de l'utilisateur.
  */
 export function generateTicketCode(initials: string): string {
   const randomStr = Math.random().toString(36).substring(2, 8).toUpperCase();

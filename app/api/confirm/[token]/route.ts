@@ -1,17 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-function getSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key || url.includes('dummy') || key === 'dummy_key' || key === 'dummy') {
-    if (process.env.NEXT_PHASE === 'phase-production-build') {
-      return createClient(url || 'https://dummy.supabase.co', key || 'dummy_key');
-    }
-    throw new Error('CONFIG_ERROR: NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY is missing/invalid.');
-  }
-  return createClient(url, key);
-}
+import { getSupabase } from '@/utils/supabase/admin';
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
@@ -19,6 +7,7 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ token: string }> }
 ) {
+  // Client Supabase centralisé
   const supabase = getSupabase();
   const { token } = await params;
 
@@ -27,7 +16,7 @@ export async function GET(
   }
 
   try {
-    // Find reservation by token
+    // Recherche de la réservation par jeton
     const { data: reservation, error } = await supabase
       .from('reservations')
       .select('id, status, confirmed_at, full_name, event_id')
@@ -42,7 +31,7 @@ export async function GET(
       return NextResponse.redirect(`${APP_URL}/confirmation?status=already_confirmed&event=${reservation.event_id}`);
     }
 
-    // Confirm the reservation
+    // Confirmer la réservation
     const { error: updateError } = await supabase
       .from('reservations')
       .update({

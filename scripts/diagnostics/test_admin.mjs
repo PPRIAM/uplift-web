@@ -1,5 +1,5 @@
 import puppeteer from 'puppeteer';
-import { createAdminUserIfNeeded } from './e2e-tests/helpers.mjs';
+import { createAdminUserIfNeeded } from '../../e2e-tests/helpers.mjs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 

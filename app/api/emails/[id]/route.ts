@@ -1,23 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { getSupabase } from '@/utils/supabase/admin';
 
-function getSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key || url.includes('dummy') || key === 'dummy_key' || key === 'dummy') {
-    if (process.env.NEXT_PHASE === 'phase-production-build') {
-      return createClient(url || 'https://dummy.supabase.co', key || 'dummy_key');
-    }
-    throw new Error('CONFIG_ERROR: NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY is missing/invalid.');
-  }
-  return createClient(url, key);
-}
-
-// ─── GET /api/emails/[id] — Get single email detail ──────────────────────────
+// ─── GET /api/emails/[id] — Obtenir les détails d'un e-mail unique ──────────────────────────
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Client Supabase centralisé
   const supabase = getSupabase();
   const { id } = await params;
 
@@ -34,7 +23,7 @@ export async function GET(
   return NextResponse.json({ email: data });
 }
 
-// ─── PATCH /api/emails/[id] — Update draft email ─────────────────────────────
+// ─── PATCH /api/emails/[id] — Mettre à jour un brouillon d'e-mail ─────────────────────────────
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -48,7 +37,7 @@ export async function PATCH(
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  // Only allow updating certain fields
+  // Autoriser uniquement la mise à jour de certains champs
   const allowedFields = [
     'subject', 'html_body', 'plain_body', 'to_emails',
     'from_email', 'from_name', 'event_id', 'scheduled_at',
@@ -76,7 +65,7 @@ export async function PATCH(
   return NextResponse.json({ email: data });
 }
 
-// ─── DELETE /api/emails/[id] — Delete email ──────────────────────────────────
+// ─── DELETE /api/emails/[id] — Supprimer un e-mail ──────────────────────────────────
 export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }

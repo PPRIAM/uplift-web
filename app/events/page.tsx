@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description: "Découvre et participe aux prochains événements Ayibuzz Media. Conférences, ateliers et espaces de réflexion pour la jeunesse haïtienne.",
 };
 
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 export default async function EventsPage() {
   const supabase = createPublicClient();

@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import {
   hasValidTicket,
@@ -7,35 +6,28 @@ import {
   getLiveHlsUrl,
 } from '@/lib/streamAccess';
 import { getSupabaseAdmin } from '@/utils/supabase/admin';
+import { createClient } from '@/utils/supabase/server';
 
-// ─── Server-side stream access check ──────────────────────────────────────────
-// This endpoint NEVER exposes the HLS URL in the client bundle.
-// It validates the user's session + ticket status before returning the URL.
-// Flow: auth check → event lookup → ticket validation → dynamic URL generation.
+// ─── Contrôle d'accès au flux côté serveur ──────────────────────────────────────────
+// Cet endpoint n'expose JAMAIS l'URL HLS dans le bundle client.
+// Il valide la session de l'utilisateur + le statut du billet avant de renvoyer l'URL.
+// Flux : vérification d'authentification → recherche d'événement → validation du billet → génération d'URL dynamique.
 //
-// Root cause of "Le flux en direct n'est pas encore disponible":
-//   1. events.cloudflare_live_input_id is NULL (migration not run, or not set)
-//   2. CLOUDFLARE_CUSTOMER_SUBDOMAIN env var is missing
-//   → Fix: fall back to CLOUDFLARE_LIVE_INPUT_ID env var when DB column is empty.
+// Cause racine de "Le flux en direct n'est pas encore disponible" :
+//   1. events.cloudflare_live_input_id est NULL (migration non exécutée, ou non défini)
+//   2. La variable d'environnement CLOUDFLARE_CUSTOMER_SUBDOMAIN est manquante
+//   → Correction : se rabattre sur la variable d'environnement CLOUDFLARE_LIVE_INPUT_ID lorsque la colonne DB est vide.
 
 export async function POST(req: NextRequest) {
   try {
-    // 1. Parse request body
+    // 1. Analyser le corps de la requête
     const body = await req.json().catch(() => ({}));
     const type: string = body.type ?? 'live';
     const eventId: string | undefined = body.eventId;
 
-    // 2. Get authenticated user from session cookies
+    // 2. Obtenir l'utilisateur authentifié depuis les cookies de session
     const cookieStore = await cookies();
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseKey = (process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)!;
-
-    const supabase = createServerClient(supabaseUrl, supabaseKey, {
-      cookies: {
-        getAll() { return cookieStore.getAll(); },
-        setAll() { /* Read-only in API routes */ },
-      },
-    });
+    const supabase = createClient(cookieStore);
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
@@ -53,7 +45,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 3. Resolve the event — either by explicit eventId or latest published event
+    // 3. Résoudre l'événement — soit par un eventId explicite, soit par le dernier événement publié
     const supabaseAdmin = getSupabaseAdmin();
     let event: any = null;
 
@@ -85,10 +77,10 @@ export async function POST(req: NextRequest) {
       event = data;
     }
 
-    // 4. Resolve live input ID — DB column first, then env var fallback
-    //    The DB column is set via the supabase_stream_access.sql migration.
-    //    Until that migration is run (or the value is manually set), the env
-    //    var CLOUDFLARE_LIVE_INPUT_ID acts as a safe fallback.
+    // 4. Résoudre l'ID d'entrée en direct — colonne de la base de données en premier, puis variable d'environnement en secours.
+    //    La colonne DB est définie via la migration supabase_stream_access.sql.
+    //    Jusqu'à ce que cette migration soit exécutée (ou la valeur définie manuellement), la variable
+    //    d'environnement CLOUDFLARE_LIVE_INPUT_ID sert de secours sécurisé.
     const liveInputId: string | null =
       event.cloudflare_live_input_id?.trim() ||
       process.env.CLOUDFLARE_LIVE_INPUT_ID?.trim() ||
@@ -106,7 +98,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 5. Validate ticket access
+    // 5. Valider l'accès au billet
     const ticketResult = await hasValidTicket(user.email, event.id);
 
     if (!ticketResult.valid) {
@@ -116,11 +108,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 6. Generate the appropriate HLS URL dynamically
+    // 6. Générer l'URL HLS appropriée de manière dynamique
     let streamUrl: string | null = null;
 
     if (type === 'replay') {
-      // Dynamic: call Cloudflare API to get the latest ready recording
+      // Dynamique : appeler l'API Cloudflare pour obtenir le dernier enregistrement prêt
       streamUrl = await getLatestReplayHlsUrl(liveInputId);
       if (!streamUrl) {
         console.warn('[Stream Access] No ready replay found for liveInputId:', liveInputId);
@@ -130,7 +122,7 @@ export async function POST(req: NextRequest) {
         );
       }
     } else {
-      // Live: build URL from customer subdomain + live input ID
+      // Direct : construire l'URL à partir du sous-domaine client + ID d'entrée en direct
       streamUrl = getLiveHlsUrl(liveInputId);
       if (!streamUrl) {
         console.error('[Stream Access] getLiveHlsUrl returned null. CLOUDFLARE_CUSTOMER_SUBDOMAIN:', process.env.CLOUDFLARE_CUSTOMER_SUBDOMAIN);

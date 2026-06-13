@@ -1,18 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
-
-function getSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key || url.includes('dummy') || key === 'dummy_key' || key === 'dummy') {
-    if (process.env.NEXT_PHASE === 'phase-production-build') {
-      return createClient(url || 'https://dummy.supabase.co', key || 'dummy_key');
-    }
-    throw new Error('CONFIG_ERROR: NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY is missing/invalid.');
-  }
-  return createClient(url, key);
-}
+import { getSupabase } from '@/utils/supabase/admin';
 
 function getResend() {
   return new Resend(process.env.RESEND_API_KEY || 're_dummy_key');
@@ -20,7 +8,7 @@ function getResend() {
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
-// Strip HTML tags to generate a plain-text fallback
+// Supprimer les balises HTML pour générer un texte brut de secours
 function stripHtml(html: string): string {
   return html
     .replace(/<br\s*\/?>/gi, '\n')
@@ -38,8 +26,9 @@ function stripHtml(html: string): string {
     .trim();
 }
 
-// ─── GET /api/emails — List emails with pagination & filtering ────────────────
+// ─── GET /api/emails — Lister les e-mails avec pagination et filtrage ────────────────
 export async function GET(req: NextRequest) {
+  // Client Supabase centralisé
   const supabase = getSupabase();
   const { searchParams } = new URL(req.url);
   const direction = searchParams.get('direction') || 'outbound';
@@ -78,8 +67,9 @@ export async function GET(req: NextRequest) {
   });
 }
 
-// ─── POST /api/emails — Create email (draft) or send immediately ──────────────
+// ─── POST /api/emails — Créer un e-mail (brouillon) ou l'envoyer immédiatement ──────────────
 export async function POST(req: NextRequest) {
+  // Client Supabase centralisé
   const supabase = getSupabase();
   let body: Record<string, unknown>;
   try {
@@ -137,7 +127,7 @@ export async function POST(req: NextRequest) {
     metadata: metadata || {},
   };
 
-  // Insert into database
+  // Insérer dans la base de données
   const { data: inserted, error: insertError } = await supabase
     .from('email_messages')
     .insert(emailData)
@@ -148,7 +138,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: insertError.message }, { status: 500 });
   }
 
-  // Send immediately if requested
+  // Envoyer immédiatement si demandé
   if (send_now && to_emails && to_emails.length > 0) {
     const resend = getResend();
     try {

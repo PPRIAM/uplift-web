@@ -1,20 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-function getSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key || url.includes('dummy') || key === 'dummy_key' || key === 'dummy') {
-    if (process.env.NEXT_PHASE === 'phase-production-build') {
-      return createClient(url || 'https://dummy.supabase.co', key || 'dummy_key');
-    }
-    throw new Error('CONFIG_ERROR: SUPABASE_SERVICE_ROLE_KEY is missing. Ticket validation requires this key.');
-  }
-  return createClient(url, key);
-}
+import { getSupabaseAdmin } from '@/utils/supabase/admin';
 
 export async function POST(req: NextRequest) {
-  const supabase = getSupabase();
+  // Client Supabase Admin centralisé
+  const supabase = getSupabaseAdmin();
   try {
     const { ticket_id } = await req.json();
 
@@ -22,7 +11,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Ticket ID is required' }, { status: 400 });
     }
 
-    // Lookup the ticket by personalized code
+    // Rechercher le billet par son code personnalisé
     const { data: ticket, error: ticketError } = await supabase
       .from('issued_tickets')
       .select('*, reservations(full_name, email, events(name))')
@@ -40,7 +29,7 @@ export async function POST(req: NextRequest) {
       }, { status: 409 });
     }
 
-    // Validate the ticket
+    // Valider le billet
     const { error: updateError } = await supabase
       .from('issued_tickets')
       .update({ status: 'used', used_at: new Date().toISOString() })

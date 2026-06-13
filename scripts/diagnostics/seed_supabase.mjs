@@ -1,13 +1,44 @@
 import { createClient } from '@supabase/supabase-js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-const supabaseUrl = 'https://nmkwhseqfbhrbzqldvcm.supabase.co';
-const supabaseKey = 'sb_publishable_quKA2sUvLiryhd4jr4y_LQ_aOMHEOGZ';
+// Charger les variables d'environnement depuis .env.local de manière sécurisée
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const envPath = path.resolve(__dirname, '../../.env.local');
+if (fs.existsSync(envPath)) {
+  const envConfig = fs.readFileSync(envPath, 'utf8');
+  for (const line of envConfig.split('\n')) {
+    const matched = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
+    if (matched) {
+      const key = matched[1];
+      let value = matched[2] || '';
+      value = value.trim();
+      if (value.startsWith('"') && value.endsWith('"')) {
+        value = value.substring(1, value.length - 1);
+      } else if (value.startsWith("'") && value.endsWith("'")) {
+        value = value.substring(1, value.length - 1);
+      }
+      process.env[key] = value;
+    }
+  }
+}
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+// Pour le seeding, nous préférons utiliser la clé de service (Admin) si elle est disponible, sinon la clé anonyme
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error("❌ Configuration manquante : NEXT_PUBLIC_SUPABASE_URL ou la clé Supabase est introuvable dans .env.local");
+  process.exit(1);
+}
+
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function seed() {
-  console.log("Seeding UPLIFT 2.0 data...");
+  console.log("Seeding des données UPLIFT 2.0...");
   
-  // 1. Insert Event
+  // 1. Insérer l'événement
   const { data: event, error: errEvent } = await supabase.from('events').upsert({
     id: 'a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d',
     name: 'UPLIFT 2.0',
@@ -24,9 +55,9 @@ async function seed() {
     tags: ['Jeunesse', 'Leadership', 'Engagement', 'Haïti', 'Société'],
     published: true
   }).select().single();
-  if (errEvent) console.error("Event Insert Error:", errEvent);
+  if (errEvent) console.error("Erreur lors de l'insertion de l'événement:", errEvent);
 
-  // 2. Insert Speakers
+  // 2. Insérer les conférenciers (speakers)
   const { error: errSpeakers } = await supabase.from('speakers').upsert([
     {
         id: 'e5f67a8b-9c0d-1e2f-3a4b-5c6d7e8f9a0b',
@@ -50,9 +81,9 @@ async function seed() {
         profile_image: '/images/speakers/wilnise.jpg'
     }
   ]);
-  if (errSpeakers) console.error("Speakers Insert Error:", errSpeakers);
+  if (errSpeakers) console.error("Erreur lors de l'insertion des conférenciers:", errSpeakers);
 
-  // 3. Insert Sessions
+  // 3. Insérer les sessions
   const { error: errSessions } = await supabase.from('sessions').upsert([
     {
         id: '1a2b3c4d-5e6f-7a8b-9c0d-e1f2a3b4c5d6',
@@ -71,7 +102,7 @@ async function seed() {
         start_time: '2026-04-25T20:00:00.000Z'
     },
     {
-        id: '3c4d5e6f-7a8b-9c0d-1e2f-3a4b5c6d7e8f',
+        id: '3c4d5e6f-7a8b-9c0d-1e2f-3a4b-5c6d7e8f9a0b',
         event_id: 'a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d',
         title: "De l'indifférence à l'engagement",
         description: 'Réveiller la conscience...',
@@ -79,16 +110,16 @@ async function seed() {
         start_time: '2026-04-25T21:00:00.000Z'
     }
   ]);
-  if (errSessions) console.error("Sessions Insert Error:", errSessions);
+  if (errSessions) console.error("Erreur lors de l'insertion des sessions:", errSessions);
 
-  // 4. Insert Session Speakers (join)
+  // 4. Insérer la table de liaison session_speakers
   const { error: errJoin } = await supabase.from('session_speakers').upsert([
       { session_id: '1a2b3c4d-5e6f-7a8b-9c0d-e1f2a3b4c5d6', speaker_id: 'e5f67a8b-9c0d-1e2f-3a4b-5c6d7e8f9a0b' },
       { session_id: '2b3c4d5e-6f7a-8b9c-0d1e-2f3a4b5c6d7e', speaker_id: 'c1d2e3f4-a5b6-c7d8-e9f0-1a2b3c4d5e6f' },
-      { session_id: '3c4d5e6f-7a8b-9c0d-1e2f-3a4b5c6d7e8f', speaker_id: 'b2c3d4e5-f6a7-b8c9-d0e1-2f3a4b5c6d7e' }
+      { session_id: '3c4d5e6f-7a8b-9c0d-1e2f-3a4b-5c6d7e8f9a0b', speaker_id: 'b2c3d4e5-f6a7-b8c9-d0e1-2f3a4b5c6d7e' }
   ]);
-  if (errJoin) console.error("Join Insert Error:", errJoin);
+  if (errJoin) console.error("Erreur lors de l'insertion de la liaison session_speakers:", errJoin);
 
-  console.log("Seeding complete!");
+  console.log("Seeding terminé avec succès !");
 }
 seed();

@@ -49,6 +49,7 @@ interface FeaturedEvent {
   registered_count?: number;
   capacity?: number;
   tagline?: string;
+  is_live?: boolean;
 }
 
 interface HomePageClientProps {
@@ -103,6 +104,7 @@ export default function HomePageClient({
 
   // Définition des valeurs pour l'événement vedette UPLIFT 2.0, ou Ayibuzz Media si null
   const isAyibuzzMedia = !featuredEvent;
+  const isLive = featuredEvent?.is_live || false;
   const fallbackEventId = featuredEvent?.id || '';
   const organizerName = featuredEvent?.organizer || (isAyibuzzMedia ? 'Agence' : 'AYIBUZZ MEDIA × UCLUB');
   const cityName = featuredEvent?.city || (isAyibuzzMedia ? 'Port-au-Prince, Haïti' : 'Gonaïves, Haïti');
@@ -180,6 +182,7 @@ export default function HomePageClient({
         inscritsCount={inscritsCount}
         placesRestantes={placesRestantes}
         isAyibuzzMedia={isAyibuzzMedia}
+        isLive={isLive}
       />
 
       {/* 2. SECTION STATS BAR */}

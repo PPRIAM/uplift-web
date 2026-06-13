@@ -31,7 +31,7 @@ export default function Navbar() {
     checkLiveEvents();
     const interval = setInterval(checkLiveEvents, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [pathname]);
 
   useEffect(() => {
     const handleScroll = () => {

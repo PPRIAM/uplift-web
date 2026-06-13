@@ -7,7 +7,7 @@ import { Calendar, MapPin, Users, Clock, ChevronLeft } from 'lucide-react';
 import { formatTime } from '@/lib/dateUtils';
 import EventClient from './EventClient';
 
-export const revalidate = 86400; // ISR: Revalidate every 24 hours (in seconds)
+export const dynamic = 'force-dynamic';
 
 // ─── Metadata Generation ─────────────────────────────────────────────────────
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {

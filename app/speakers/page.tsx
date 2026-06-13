@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   description: "Découvre les créateurs, experts et leaders d'opinion qui partagent leur vision sur Ayibuzz Media.",
 };
 
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 export default async function SpeakersPage() {
   const cookieStore = await cookies();
