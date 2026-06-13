@@ -142,11 +142,11 @@ export default function HomePageClient({
           type: ev.type || (idx === 0 ? 'Conférence' : 'Atelier'),
           name: ev.title || ev.name,
           description: ev.description || (idx === 0 ? 'Conférence principale' : 'Atelier pratique'),
-          speaker: {
-            name: sp ? sp.full_name : (idx === 0 ? 'Stéphanie Sophie LOUIS' : idx === 1 ? 'Joacina ORIVAL' : 'Wilnise JACQUES'),
-            role: sp ? sp.role : (idx === 0 ? "Présidente du gouvernement Jeunesse d'Haïti" : idx === 1 ? 'Étudiante finissante en sociologie' : 'Avocate & Maîtresse de cérémonie'),
-            image: sp && sp.profile_image ? sp.profile_image : (idx === 0 ? '/images/speakers/stephanie.jpg' : idx === 1 ? '/images/speakers/joacina.jpg' : '/images/speakers/wilnise.jpg')
-          }
+          speaker: sp ? {
+            name: sp.full_name,
+            role: sp.role || '',
+            image: sp.profile_image || '/images/speakers/stephanie.jpg'
+          } : null
         };
       })
     : [];
@@ -195,6 +195,7 @@ export default function HomePageClient({
           activeSessions={activeSessions}
           fallbackEventId={fallbackEventId}
           hasFeaturedEvent={!!featuredEvent}
+          eventName={eventName}
         />
       )}
 

@@ -15,7 +15,7 @@ interface Session {
   type: string;
   name: string;
   description: string;
-  speaker: Speaker;
+  speaker?: Speaker | null;
 }
 
 interface SessionsSectionProps {
@@ -23,6 +23,7 @@ interface SessionsSectionProps {
   activeSessions: Session[];
   fallbackEventId: string;
   hasFeaturedEvent: boolean;
+  eventName: string;
 }
 
 // Section des Sessions UPLIFT 2.0 - Présentation du programme avec cartes alternées asymétriques
@@ -31,6 +32,7 @@ export default function SessionsSection({
   activeSessions,
   fallbackEventId,
   hasFeaturedEvent,
+  eventName,
 }: SessionsSectionProps) {
   if (!hasFeaturedEvent) {
     return (
@@ -65,7 +67,7 @@ export default function SessionsSection({
       <div className="text-center mb-16">
         <div className="badge badge-primary inline-flex mb-3">Sessions phares</div>
         <h2 className="font-heading text-[clamp(32px,4vw,44px)] font-bold tracking-tight text-[#0F172A]">
-          Programme UPLIFT 2.0
+          Programme {eventName}
         </h2>
         <p className="text-[#64748B] text-lg mt-3 max-w-[650px] mx-auto leading-relaxed">
           {tagline}
@@ -115,33 +117,35 @@ export default function SessionsSection({
                   {session.description}
                 </p>
                 
-                {/* Intervenant (épinglé en bas de carte) */}
-                <div className={`flex items-center gap-3 border-t pt-4 mt-auto ${
-                  isDark ? 'border-white/10' : 'border-slate-100'
-                }`}>
-                  <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-[0_0_0_4px_rgba(14,26,212,0.1)] relative aspect-square shrink-0">
-                    <Image 
-                      alt={session.speaker.name} 
-                      loading="lazy" 
-                      fill 
-                      sizes="40px"
-                      className="object-cover object-[center_15%]" 
-                      src={session.speaker.image}
-                    />
+                {/* Intervenant (épinglé en bas de carte, conditionnel) */}
+                {session.speaker && (
+                  <div className={`flex items-center gap-3 border-t pt-4 mt-auto ${
+                    isDark ? 'border-white/10' : 'border-slate-100'
+                  }`}>
+                    <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-[0_0_0_4px_rgba(14,26,212,0.1)] relative aspect-square shrink-0">
+                      <Image 
+                        alt={session.speaker.name} 
+                        loading="lazy" 
+                        fill 
+                        sizes="40px"
+                        className="object-cover object-[center_15%]" 
+                        src={session.speaker.image}
+                      />
+                    </div>
+                    <div>
+                      <p className={`text-[13px] font-bold ${
+                        isDark ? 'text-white' : 'text-[#0F172A]'
+                      }`}>
+                        {session.speaker.name}
+                      </p>
+                      <p className={`text-[11px] font-medium ${
+                        isDark ? 'text-slate-300' : 'text-[#64748B]'
+                      }`}>
+                        {session.speaker.role}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className={`text-[13px] font-bold ${
-                      isDark ? 'text-white' : 'text-[#0F172A]'
-                    }`}>
-                      {session.speaker.name}
-                    </p>
-                    <p className={`text-[11px] font-medium ${
-                      isDark ? 'text-slate-300' : 'text-[#64748B]'
-                    }`}>
-                      {session.speaker.role}
-                    </p>
-                  </div>
-                </div>
+                )}
 
               </div>
 
