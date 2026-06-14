@@ -4,13 +4,13 @@ import { useState, useRef } from 'react';
 import { submitSpeakerApplication } from './actions';
 import { ChevronLeft, ArrowRight, CheckCircle2, AlertCircle, Upload, ImageIcon, X } from 'lucide-react';
 import Link from 'next/link';
-import { createClient } from '@/utils/supabase/client';
 import { compressImage } from '@/utils/imageCompression';
 
 export default function SpeakerApplyPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [diagnosticId, setDiagnosticId] = useState<string | null>(null);
   
   // Image state
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -35,50 +35,34 @@ export default function SpeakerApplyPage() {
     if (file) handleFileSelect(file);
   };
 
-  async function uploadProfileImage(applicationId: string): Promise<string | null> {
-    if (!imageFile) return null;
-    const supabase = createClient();
-    
-    // Compress profile image to JPEG at 0.82 quality, max 1600px
-    const compressedFile = await compressImage(imageFile, 1600, 0.82);
-    const filePath = `${applicationId}/profile.jpg`;
-    
-    const { error: uploadError } = await supabase.storage
-      .from('speakers')
-      .upload(filePath, compressedFile, { upsert: true });
-
-    if (uploadError) {
-      console.error('Upload error:', uploadError);
-      return null;
-    }
-
-    const { data } = supabase.storage.from('speakers').getPublicUrl(filePath);
-    return data.publicUrl;
-  }
-
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoading(true);
     setError(null);
+    setDiagnosticId(null);
 
     const formData = new FormData(event.currentTarget);
+    
+    // Compress and append image if selected
+    if (imageFile) {
+      try {
+        const compressedBlob = await compressImage(imageFile, 1600, 0.82);
+        formData.append('profile_image', compressedBlob, 'profile.jpg');
+      } catch (e) {
+        console.error('Image compression failed, using original file:', e);
+        formData.append('profile_image', imageFile);
+      }
+    }
+
     const result = await submitSpeakerApplication(formData);
 
     if (result.error) {
       setError(result.error);
+      if (result.diagnosticId) {
+        setDiagnosticId(result.diagnosticId);
+      }
       setLoading(false);
     } else {
-      // Upload image if selected
-      if (imageFile && result.id) {
-        const imageUrl = await uploadProfileImage(result.id);
-        if (imageUrl) {
-          const supabase = createClient();
-          await supabase
-            .from('speaker_applications')
-            .update({ profile_image: imageUrl })
-            .eq('id', result.id);
-        }
-      }
       setSuccess(true);
       setLoading(false);
     }
@@ -123,9 +107,16 @@ export default function SpeakerApplyPage() {
         <div className="glass-strong rounded-2xl p-lg md:p-xl border border-[var(--border-default)]">
           <form onSubmit={handleSubmit} className="grid gap-lg">
             {error && (
-              <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-[var(--brand-danger)] flex items-center gap-sm text-sm font-semibold">
-                <AlertCircle size={18} />
-                {error}
+              <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-[var(--brand-danger)] flex flex-col gap-xs text-sm font-semibold">
+                <div className="flex items-center gap-sm">
+                  <AlertCircle size={18} className="shrink-0" />
+                  <span>{error}</span>
+                </div>
+                {diagnosticId && (
+                  <span className="text-xs text-[var(--text-muted)] pl-7">
+                    Code d'assistance : <span className="font-mono text-[var(--brand-danger)] select-all font-bold">{diagnosticId}</span>
+                  </span>
+                )}
               </div>
             )}
 
