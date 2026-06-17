@@ -43,7 +43,9 @@ export default async function SpeakersPage() {
       bio: s.bio || '',
       avatar: s.profile_image || '',
       twitter: s.twitter_handle || '',
-      linkedin: s.linkedin_url || ''
+      linkedin: s.linkedin_url || '',
+      // Provenance : table speakers — profil public accessible
+      source: 'speakers' as const,
     });
   });
 
@@ -57,7 +59,9 @@ export default async function SpeakersPage() {
         bio: a.bio || '',
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(a.full_name)}`,
         twitter: a.twitter_handle || '',
-        linkedin: a.linkedin_url || ''
+        linkedin: a.linkedin_url || '',
+        // Provenance : candidature approuvée — pas de page profil dédiée
+        source: 'applications' as const,
       });
     }
   });

@@ -1,7 +1,83 @@
+import { Metadata } from 'next';
 import { createPublicClient } from '@/utils/supabase/public';
 import HomePageClient from '@/components/HomePageClient';
 
 export const dynamic = 'force-dynamic';
+
+// ─── SEO Adaptatif : basé sur l'événement vedette, fallback Ayibuzz ───────────
+export async function generateMetadata(): Promise<Metadata> {
+  const supabase = createPublicClient();
+
+  // Chercher l'événement vedette actif
+  const { data: featured } = await supabase
+    .from('events')
+    .select('name, tagline, description, cover_image')
+    .eq('published', true)
+    .eq('is_featured', true)
+    .limit(1)
+    .single();
+
+  // Si aucun événement vedette, tenter le prochain événement à venir
+  let event = featured;
+  if (!event) {
+    const { data: next } = await supabase
+      .from('events')
+      .select('name, tagline, description, cover_image')
+      .eq('published', true)
+      .gt('date_time', new Date().toISOString())
+      .order('date_time', { ascending: true })
+      .limit(1)
+      .single();
+    event = next;
+  }
+
+  // Fallback : métadonnées de marque Ayibuzz Media
+  if (!event) {
+    return {
+      title: 'Ayibuzz Media | Leve ansanm, Briye ansanm',
+      description:
+        "Ayibuzz Media — la plateforme media de la nouvelle génération haïtienne. Découvre les voix, les histoires et les événements qui façonnent Haïti.",
+      openGraph: {
+        title: 'Ayibuzz Media | Leve ansanm, Briye ansanm',
+        description:
+          "La scène digitale d'Haïti : la prochaine génération crée, partage et amplifie les histoires qui façonnent notre avenir.",
+        images: [{ url: '/images/og-image.jpg', width: 1200, height: 630 }],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: 'Ayibuzz Media | Leve ansanm, Briye ansanm',
+        description:
+          "La scène digitale d'Haïti. Découvre les voix, les histoires et les événements qui façonnent notre avenir.",
+        images: ['/images/og-image.jpg'],
+      },
+    };
+  }
+
+  // Métadonnées dynamiques calquées sur l'événement vedette
+  const title = `${event.name} | Ayibuzz Media`;
+  const description =
+    event.tagline ||
+    event.description?.substring(0, 160) ||
+    "Découvre le prochain événement Ayibuzz Media.";
+  const ogImage = event.cover_image || '/images/og-image.jpg';
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: [{ url: ogImage, width: 1200, height: 630, alt: event.name }],
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [ogImage],
+    },
+  };
+}
 
 export default async function HomePage() {
   const supabase = createPublicClient();

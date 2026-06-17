@@ -27,6 +27,8 @@ interface Speaker {
   avatar: string;
   twitter?: string;
   linkedin?: string;
+  // Distingue les intervenants de la table principale vs les candidatures
+  source: 'speakers' | 'applications';
 }
 
 export default function SpeakersClient({ initialSpeakers }: { initialSpeakers: Speaker[] }) {
@@ -121,12 +123,15 @@ export default function SpeakersClient({ initialSpeakers }: { initialSpeakers: S
                   </p>
                   
                   <div className="mt-auto">
-                    <Link 
-                      href={`/speakers/${speaker.id}`} 
-                      className="inline-flex items-center gap-1.5 text-sm font-bold text-[var(--brand-accent)] hover:text-[var(--brand-primary)] transition-colors no-underline group/link"
-                    >
-                      Voir le profil <span className="transition-transform duration-200 group-hover/link:translate-x-0.5">→</span>
-                    </Link>
+                    {/* Lien de profil uniquement disponible pour la table speakers */}
+                    {speaker.source === 'speakers' && (
+                      <Link 
+                        href={`/speakers/${speaker.id}`} 
+                        className="inline-flex items-center gap-1.5 text-sm font-bold text-[var(--brand-accent)] hover:text-[var(--brand-primary)] transition-colors no-underline group/link"
+                      >
+                        Voir le profil <span className="transition-transform duration-200 group-hover/link:translate-x-0.5">→</span>
+                      </Link>
+                    )}
                   </div>
                 </div>
               </div>
