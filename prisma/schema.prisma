@@ -84,3 +84,17 @@ model EventSpeaker {
   @@id([event_id, speaker_id])
   @@map("event_speakers")
 }
+
+// Modèle représentant un sponsor de l'événement
+model Sponsor {
+  id         String   @id @default(uuid())
+  name       String
+  logoUrl    String   @map("logo_url")
+  websiteUrl String?  @map("website_url")
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("sponsors")
+}
+
+

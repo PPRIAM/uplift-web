@@ -9,7 +9,7 @@ import { useAdminLayoutStore } from '@/store/adminLayoutStore';
 import {
   LayoutDashboard, Calendar, Users, Ticket, ClipboardList,
   LogOut, Menu, X, ChevronRight, ChevronLeft, List, Mail,
-  Search, Megaphone, FileText, Scan, RefreshCw
+  Search, Megaphone, FileText, Scan, RefreshCw, Heart
 } from 'lucide-react';
 
 // Configuration des items pour la section "Gestion"
@@ -21,6 +21,7 @@ const gestionItems = [
   { href: '/admin/speakers', label: 'Intervenants', icon: Users },
   { href: '/admin/speaker-applications', label: 'Candidatures', icon: FileText },
   { href: '/admin/tickets', label: 'Billets', icon: Ticket },
+  { href: '/admin/sponsors', label: 'Sponsors', icon: Heart },
 ];
 
 // Configuration des items pour la section "Outils"

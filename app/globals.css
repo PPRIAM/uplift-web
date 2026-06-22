@@ -523,3 +523,68 @@ body {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
+
+/* ==========================================================================
+   6. ANIMATIONS ET STYLES DU COMPOSANT SPONSOR (SPONSORS & MARQUEE)
+   ========================================================================== */
+
+/* Animation de défilement infini vers la gauche (utilisant l'accélération GPU) */
+.animate-marquee-left {
+  animation: marquee-left linear infinite;
+}
+
+/* Animation de défilement infini vers la droite (utilisant l'accélération GPU) */
+.animate-marquee-right {
+  animation: marquee-right linear infinite;
+}
+
+/* Pause de l'animation lors du survol de la souris */
+.animate-marquee-left:hover,
+.animate-marquee-right:hover {
+  animation-play-state: paused !important;
+}
+
+/* Définition des images-clés (keyframes) pour le défilement vers la gauche.
+   Puisque nous répétons la liste de logos 4 fois, un défilement de 25% de la
+   largeur totale du conteneur correspond exactement à une répétition complète,
+   permettant ainsi un bouclage visuel infini et parfaitement imperceptible. */
+@keyframes marquee-left {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-25%, 0, 0);
+  }
+}
+
+/* Définition des images-clés pour le défilement vers la droite */
+@keyframes marquee-right {
+  0% {
+    transform: translate3d(-25%, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* Styles haut de gamme pour les cartes FeaturedSponsor */
+.featured-sponsor-card {
+  will-change: transform, border-color;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.5s ease, box-shadow 0.5s ease;
+}
+
+/* Effets lors du survol de la carte vedette */
+.featured-sponsor-card:hover {
+  transform: translateY(-4px) translate3d(0, 0, 0) !important;
+  box-shadow: 0 20px 40px rgba(104, 66, 255, 0.15), 0 0 30px rgba(104, 66, 255, 0.1) !important;
+}
+
+/* Révélation dynamique des orbes lumineux (Spotlight effect) */
+.featured-sponsor-card:hover .sponsor-glow-orb {
+  transform: scale(1.2) translate3d(30px, 20px, 0) !important;
+}
+
+.featured-sponsor-card:hover .sponsor-glow-orb-secondary {
+  transform: scale(1.3) translate3d(-20px, -20px, 0) !important;
+}
+
