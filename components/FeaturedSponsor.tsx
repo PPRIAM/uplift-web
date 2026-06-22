@@ -61,7 +61,7 @@ export default function FeaturedSponsor({ sponsor }: FeaturedSponsorProps) {
           </h3>
 
           <p className="text-slate-400 text-sm md:text-base leading-relaxed transition-all duration-300 group-hover:text-slate-200">
-            {sponsor.description || "Fier partenaire d'UPLIFT 2.0. Ensemble, propulsons la créativité et le leadership de la jeunesse haïtienne."}
+            {sponsor.description || "Fier partenaire d'AYIBUZZ MÉDIA. Ensemble, propulsons la créativité et le leadership de la jeunesse haïtienne."}
           </p>
 
           {/* Bouton de redirection révélé au survol */}
