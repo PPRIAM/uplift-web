@@ -37,18 +37,18 @@ export default function HeroSection({
   coverImage,
 }: HeroSectionProps) {
   return (
-    <section 
+    <section
       className="min-h-[90dvh] lg:min-h-[100dvh] flex items-center bg-[#F8FAFC] relative overflow-hidden pt-24 pb-12 px-6 font-body"
     >
       {/* Subtiles lignes de grille structurelles asymétriques en arrière-plan */}
       <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[linear-gradient(to_right,#0E1AD4_1px,transparent_1px),linear-gradient(to_bottom,#0E1AD4_1px,transparent_1px)] bg-[size:40px_40px]"></div>
-      
+
       <div className="max-w-[1200px] mx-auto w-full relative z-10 lg:pl-12">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          
+
           {/* Bloc de gauche : Contenu textuel et actions (7 colonnes) */}
           <div className="lg:col-span-7 flex flex-col items-start text-left">
-            
+
             {/* Badge de l'organisateur et de la ville (et Badge En direct si Live) */}
             <div className="flex flex-wrap items-center gap-3 mb-6">
               <div className="animate-fade-in-up inline-flex items-center gap-2 bg-[#0E1AD4]/10 border border-[#0E1AD4]/20 rounded-full py-1.5 px-4">
@@ -103,8 +103,8 @@ export default function HeroSection({
                   <ArrowRight size={16} />
                 </Link>
               )}
-              <Link 
-                className="btn-secondary no-underline text-sm py-3 px-6 text-[#0F172A] border-[#0F172A] hover:bg-[#0E1AD4]/5" 
+              <Link
+                className="btn-secondary no-underline text-sm py-3 px-6 text-[#0F172A] border-[#0F172A] hover:bg-[#0E1AD4]/5"
                 href="/events"
               >
                 {isAyibuzzMedia ? "Parcourir les événements passés" : "En savoir plus"}
@@ -122,15 +122,17 @@ export default function HeroSection({
                   <MapPin size={15} className="text-[#0E1AD4]" />
                   {locationName}
                 </div>
+                {/*
                 <div className="flex items-center gap-2 text-sm font-semibold text-[#334155]">
                   <Users size={15} className="text-[#0E1AD4]" />
                   <span className="font-mono">{inscritsCount}</span> inscrits • <span className="font-mono">{placesRestantes}</span> places restantes
                 </div>
+                */}
               </div>
             )}
 
           </div>
-          
+
           {/* Bloc de droite : Illustration filaire technique dynamique OU Image de couverture (5 colonnes) */}
           <div className="lg:col-span-5 hidden lg:flex justify-center items-center relative select-none w-full">
             {coverImage ? (
@@ -153,14 +155,14 @@ export default function HeroSection({
                   <line x1="20" y1="200" x2="380" y2="200" stroke="currentColor" strokeWidth="1" strokeDasharray="4 4" className="opacity-45" />
                   <line x1="72" y1="72" x2="328" y2="328" stroke="currentColor" strokeWidth="0.75" strokeDasharray="2 6" className="opacity-30" />
                   <line x1="72" y1="328" x2="328" y2="72" stroke="currentColor" strokeWidth="0.75" strokeDasharray="2 6" className="opacity-30" />
-                  
+
                   {/* Cercles concentriques */}
                   <circle cx="200" cy="200" r="170" stroke="currentColor" strokeWidth="1.5" strokeDasharray="5 5" className="animate-[spin_60s_linear_infinite] opacity-60" />
                   <circle cx="200" cy="200" r="130" stroke="currentColor" strokeWidth="1.5" className="opacity-75" />
                   <circle cx="200" cy="200" r="90" stroke="currentColor" strokeWidth="1" strokeDasharray="8 4" className="animate-[spin_30s_linear_infinite_reverse] opacity-80" />
                   <circle cx="200" cy="200" r="50" stroke="currentColor" strokeWidth="1.5" className="opacity-90" />
                   <circle cx="200" cy="200" r="15" stroke="currentColor" strokeWidth="2" />
-                  
+
                   {/* Points de pivot cinétiques */}
                   <circle cx="200" cy="70" r="4.5" fill="currentColor" />
                   <circle cx="330" cy="200" r="4.5" fill="currentColor" />
@@ -171,7 +173,7 @@ export default function HeroSection({
               </div>
             )}
           </div>
-          
+
         </div>
       </div>
     </section>
