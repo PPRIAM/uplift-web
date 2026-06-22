@@ -1,0 +1,92 @@
+﻿{
+  "tech": {
+    "benefits": [
+      "Networking professionnel",
+      "Certificat de participation",
+      "Accès aux enregistrements vidéo",
+      "Mentorat technique par des experts"
+    ],
+    "objectives": [
+      "Apprentissage de technologies",
+      "Découverte de frameworks modernes",
+      "Pratique du code en direct"
+    ],
+    "outcomes": [
+      "Prototype fonctionnel de projet",
+      "Certificat d'accomplissement",
+      "Compétences prêtes pour l'emploi"
+    ],
+    "audience": [
+      "Développeurs",
+      "Architectes logiciels",
+      "Étudiants en technologie",
+      "Ingénieurs logiciels"
+    ]
+  },
+  "culture": {
+    "benefits": [
+      "Rencontre avec des artistes reconnus",
+      "Expérience immersive unique",
+      "Accès prioritaire aux expositions"
+    ],
+    "objectives": [
+      "Sensibilisation aux pratiques artistiques",
+      "Découverte du patrimoine culturel",
+      "Dialogue interculturel"
+    ],
+    "outcomes": [
+      "Création d'une œuvre collective",
+      "Découverte de nouvelles perspectives",
+      "Inspiration artistique renouvelée"
+    ],
+    "audience": [
+      "Artistes et créateurs",
+      "Amateurs d'art et d'histoire",
+      "Grand public curieux"
+    ]
+  },
+  "leadership": {
+    "benefits": [
+      "Coaching personnalisé",
+      "Mentorat par des pairs seniors",
+      "Opportunités d'avancement professionnel"
+    ],
+    "objectives": [
+      "Développement des compétences de leadership",
+      "Gestion d'équipe collaborative",
+      "Prise de décision stratégique"
+    ],
+    "outcomes": [
+      "Plan de développement individuel rédigé",
+      "Réseau étendu de leaders sectoriels",
+      "Outils pratiques de management"
+    ],
+    "audience": [
+      "Managers et chefs d'équipe",
+      "Chefs d'entreprise et entrepreneurs",
+      "Professionnels en transition de carrière"
+    ]
+  },
+  "education": {
+    "benefits": [
+      "Ressources pédagogiques téléchargeables",
+      "Accès gratuit à la bibliothèque en ligne",
+      "Attestation d'heures de formation académique"
+    ],
+    "objectives": [
+      "Apprentissage par projet et pédagogie active",
+      "Maîtrise de nouvelles méthodologies éducatives",
+      "Intégration d'outils numériques en classe"
+    ],
+    "outcomes": [
+      "Plan de leçon ou programme d'enseignement créé",
+      "Guide pratique d'évaluation des compétences",
+      "Méthodes innovantes à mettre en pratique"
+    ],
+    "audience": [
+      "Enseignants du primaire et secondaire",
+      "Formateurs et concepteurs pédagogiques",
+      "Étudiants en sciences de l'éducation"
+    ]
+  }
+}

@@ -124,10 +124,15 @@ export default function HomePageClient({
   // Deserialize metadata from location_details if available
   let eventMetadata = null;
   if (featuredEvent?.location_details) {
-    try {
-      eventMetadata = JSON.parse(featuredEvent.location_details);
-    } catch (e) {
-      // ignore parsing error
+    const details = featuredEvent.location_details.trim();
+    if (details.startsWith('{')) {
+      try {
+        eventMetadata = JSON.parse(details);
+      } catch (e) {
+        eventMetadata = { benefits: featuredEvent.location_details };
+      }
+    } else {
+      eventMetadata = { benefits: featuredEvent.location_details };
     }
   }
 

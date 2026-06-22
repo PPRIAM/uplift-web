@@ -8,6 +8,37 @@ interface WhyUpliftSectionProps {
 }
 
 // Section "Pourquoi UPLIFT" UPLIFT 2.0 - Présentation des propositions de valeur en grille asymétrique
+const renderDescription = (value: any, defaultText: string) => {
+  if (!value) return defaultText;
+  
+  let list: string[] = [];
+  if (Array.isArray(value)) {
+    list = value;
+  } else if (typeof value === 'string') {
+    if (value.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(value);
+        if (Array.isArray(parsed)) list = parsed;
+      } catch (e) {
+        list = value.split('\n').map(s => s.trim()).filter(Boolean);
+      }
+    } else {
+      list = value.split('\n').map(s => s.trim()).filter(Boolean);
+    }
+  }
+
+  const filteredList = list.filter(item => item.trim().length > 0);
+  if (filteredList.length === 0) return defaultText;
+
+  return (
+    <ul className="list-disc pl-4 space-y-1.5 mt-2 text-left">
+      {filteredList.map((item: string, idx: number) => (
+        <li key={idx} className="text-xs md:text-sm leading-relaxed">{item}</li>
+      ))}
+    </ul>
+  );
+};
+
 export default function WhyUpliftSection({ hasFeaturedEvent, eventMetadata }: WhyUpliftSectionProps) {
   if (!hasFeaturedEvent) {
     return (
@@ -36,23 +67,23 @@ export default function WhyUpliftSection({ hasFeaturedEvent, eventMetadata }: Wh
   const assets = [
     {
       icon: Award,
-      title: eventMetadata?.benefits || 'Bénéfices',
-      description: 'Des intervenants engagés qui partagent des perspectives réelles sur les défis de la jeunesse haïtienne.',
+      title: 'Bénéfices',
+      description: renderDescription(eventMetadata?.benefits, 'Des intervenants engagés qui partagent des perspectives réelles sur les défis de la jeunesse haïtienne.'),
     },
     {
       icon: Heart,
-      title: eventMetadata?.objectives || 'Objectifs',
-      description: 'Des espaces de réflexion pratique pour explorer, comprendre et agir dans un contexte de crise.',
+      title: 'Objectifs',
+      description: renderDescription(eventMetadata?.objectives, 'Des espaces de réflexion pratique pour explorer, comprendre et agir dans un contexte de crise.'),
     },
     {
       icon: Globe,
-      title: eventMetadata?.outcomes || 'Résultats attendus',
-      description: 'Connectez-vous avec des jeunes engagés, des leaders en devenir et des professionnels inspirants.',
+      title: 'Résultats attendus',
+      description: renderDescription(eventMetadata?.outcomes, 'Connectez-vous avec des jeunes engagés, des leaders en devenir et des professionnels inspirants.'),
     },
     {
       icon: TrendingUp,
-      title: eventMetadata?.audience || 'Public cible',
-      description: "L'accès à l'inspiration et aux idées ne devrait pas avoir de prix. UPLIFT 2.0 est ouvert à tous.",
+      title: 'Public cible',
+      description: renderDescription(eventMetadata?.audience, "L'accès à l'inspiration et aux idées ne devrait pas avoir de prix. UPLIFT 2.0 est ouvert à tous."),
     },
   ];
 
@@ -105,11 +136,11 @@ export default function WhyUpliftSection({ hasFeaturedEvent, eventMetadata }: Wh
               </h3>
 
               {/* Description de l'atout */}
-              <p className={`text-sm leading-relaxed z-10 relative ${
+              <div className={`text-sm leading-relaxed z-10 relative ${
                 isDark ? 'text-slate-200' : 'text-[#64748B]'
               }`}>
                 {item.description}
-              </p>
+              </div>
 
               {/* Petit motif filaire décoratif à l'arrière-plan */}
               <div className={`absolute right-2 bottom-2 w-14 h-14 pointer-events-none opacity-[0.05] ${

@@ -4,6 +4,7 @@ import { createClient } from '@/utils/supabase/client';
 import { Plus, Edit, Trash2, Eye, EyeOff, Search, CheckCircle, X, RefreshCw, Upload, ImageIcon, Star, Radio } from 'lucide-react';
 import Link from 'next/link';
 import { formatDateShort } from '@/lib/dateUtils';
+import eventSuggestions from '@/config/event-suggestions.json';
 
 const toLocalISOString = (dateString: string | null | undefined) => {
   if (!dateString) return '';
@@ -24,6 +25,29 @@ const toLocalISOString = (dateString: string | null | undefined) => {
   return `${p('year')}-${p('month')}-${p('day')}T${p('hour')}:${p('minute')}`;
 };
 
+const parseMetadataArray = (val: any): string => {
+  if (!val) return '';
+  if (Array.isArray(val)) return val.join('\n');
+  if (typeof val === 'string') {
+    if (val.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(val);
+        if (Array.isArray(parsed)) return parsed.join('\n');
+      } catch(e) {}
+    }
+    return val;
+  }
+  return '';
+};
+
+const formatMetadataField = (text: string): string[] => {
+  if (!text) return [];
+  return text
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line.length > 0);
+};
+
 export default function AdminEventsPage() {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,6 +58,25 @@ export default function AdminEventsPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [speakers, setSpeakers] = useState<any[]>([]);
   const [selectedSpeakers, setSelectedSpeakers] = useState<string[]>([]);
+  const [eventTheme, setEventTheme] = useState<'tech' | 'culture' | 'leadership' | 'education'>('tech');
+
+  const benefitsRef = useRef<HTMLTextAreaElement>(null);
+  const objectivesRef = useRef<HTMLTextAreaElement>(null);
+  const outcomesRef = useRef<HTMLTextAreaElement>(null);
+  const audienceRef = useRef<HTMLTextAreaElement>(null);
+
+  const handleAddSuggestion = (field: 'metadata_benefits' | 'metadata_objectives' | 'metadata_outcomes' | 'metadata_audience', suggestion: string) => {
+    const currentValue = form[field] ? form[field].trim() : '';
+    const newValue = currentValue ? `${currentValue}\n${suggestion}` : suggestion;
+    setForm(prev => ({ ...prev, [field]: newValue }));
+    
+    setTimeout(() => {
+      if (field === 'metadata_benefits') benefitsRef.current?.focus();
+      else if (field === 'metadata_objectives') objectivesRef.current?.focus();
+      else if (field === 'metadata_outcomes') outcomesRef.current?.focus();
+      else if (field === 'metadata_audience') audienceRef.current?.focus();
+    }, 0);
+  };
 
   // Cover image state
   const [coverFile, setCoverFile] = useState<File | null>(null);
@@ -145,6 +188,7 @@ export default function AdminEventsPage() {
   const openCreate = () => {
     setEditEvent(null);
     setForm({ name: '', tagline: '', location_name: '', location_details: '', city: '', date_time: '', end_date_time: '', description: '', capacity: 500, cover_image: '', is_featured: false, is_live: false, metadata_benefits: '', metadata_objectives: '', metadata_outcomes: '', metadata_audience: '' });
+    setEventTheme('tech');
     resetCoverState();
     setSelectedSpeakers([]);
     setShowModal(true);
@@ -153,13 +197,17 @@ export default function AdminEventsPage() {
   const openEdit = async (event: any) => {
     setEditEvent(event);
 
-    let metadata = { benefits: '', objectives: '', outcomes: '', audience: '' };
+    let metadata = { benefits: '', objectives: '', outcomes: '', audience: '', theme: 'tech' };
     if (event.location_details) {
-      try {
-        const parsed = JSON.parse(event.location_details);
-        metadata = { ...metadata, ...parsed };
-      } catch (e) {
-        // use default empty metadata
+      if (event.location_details.trim().startsWith('{')) {
+        try {
+          const parsed = JSON.parse(event.location_details);
+          metadata = { ...metadata, ...parsed };
+        } catch (e) {
+          metadata.benefits = event.location_details;
+        }
+      } else {
+        metadata.benefits = event.location_details;
       }
     }
 
@@ -176,11 +224,14 @@ export default function AdminEventsPage() {
       cover_image: event.cover_image || '',
       is_featured: event.is_featured || false,
       is_live: event.is_live || false,
-      metadata_benefits: metadata.benefits || '',
-      metadata_objectives: metadata.objectives || '',
-      metadata_outcomes: metadata.outcomes || '',
-      metadata_audience: metadata.audience || '',
+      metadata_benefits: parseMetadataArray(metadata.benefits),
+      metadata_objectives: parseMetadataArray(metadata.objectives),
+      metadata_outcomes: parseMetadataArray(metadata.outcomes),
+      metadata_audience: parseMetadataArray(metadata.audience),
     });
+    const savedTheme = metadata.theme;
+    const isValidTheme = ['tech', 'culture', 'leadership', 'education'].includes(savedTheme);
+    setEventTheme(isValidTheme ? (savedTheme as any) : 'tech');
     resetCoverState();
 
     // Fetch associated speakers
@@ -263,10 +314,11 @@ export default function AdminEventsPage() {
     }
 
     const metadataPayload = {
-      benefits: form.metadata_benefits,
-      objectives: form.metadata_objectives,
-      outcomes: form.metadata_outcomes,
-      audience: form.metadata_audience
+      benefits: formatMetadataField(form.metadata_benefits),
+      objectives: formatMetadataField(form.metadata_objectives),
+      outcomes: formatMetadataField(form.metadata_outcomes),
+      audience: formatMetadataField(form.metadata_audience),
+      theme: eventTheme
     };
 
     const eventData: any = {
@@ -485,7 +537,22 @@ export default function AdminEventsPage() {
                             <><Radio size={14} /> Off</>
                           )}
                         </button>
-                        <style>{`@keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(1.4); } }`}</style>
+                        <style>{`
+                          @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(1.4); } }
+                          .suggestion-chip {
+                            background: #F3F2FC;
+                            color: var(--text-secondary);
+                            cursor: pointer;
+                            font-size: 11px;
+                            padding: 3px 8px;
+                            border-radius: 9999px;
+                            border: none;
+                            transition: all 0.2s;
+                          }
+                          .suggestion-chip:hover {
+                            background: rgba(104, 66, 255, 0.15);
+                          }
+                        `}</style>
                       </td>
                       <td>
                         <div style={{ display: 'flex', gap: '4px' }}>
@@ -614,24 +681,174 @@ export default function AdminEventsPage() {
                 <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Lieu précis</label>
                 <input type="text" value={form.location_name} onChange={e => setForm({ ...form, location_name: e.target.value })} placeholder="Centre de conférence" className="input-field" />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div>
-                  <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Bénéfices</label>
-                  <input type="text" value={form.metadata_benefits} onChange={e => setForm({ ...form, metadata_benefits: e.target.value })} placeholder="ex: Networking..." className="input-field" />
-                </div>
-                <div>
-                  <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Objectifs</label>
-                  <input type="text" value={form.metadata_objectives} onChange={e => setForm({ ...form, metadata_objectives: e.target.value })} placeholder="ex: Sensibilisation..." className="input-field" />
+              <div>
+                <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Thématique de l'événement (pour les suggestions)</label>
+                <select
+                  value={eventTheme}
+                  onChange={e => {
+                    const val = e.target.value;
+                    if (['tech', 'culture', 'leadership', 'education'].includes(val)) {
+                      setEventTheme(val as any);
+                    }
+                  }}
+                  className="input-field"
+                  style={{
+                    border: '1px solid var(--border-default)',
+                    padding: '8px 12px',
+                    background: 'var(--bg-surface)',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    width: '100%'
+                  }}
+                >
+                  <option value="tech">Technologie & Innovation</option>
+                  <option value="culture">Culture & Art</option>
+                  <option value="leadership">Leadership & Management</option>
+                  <option value="education">Éducation & Formation</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Bénéfices</label>
+                <textarea
+                  ref={benefitsRef}
+                  rows={3}
+                  value={form.metadata_benefits}
+                  onChange={e => setForm({ ...form, metadata_benefits: e.target.value })}
+                  placeholder="ex: Networking..."
+                  className="input-field"
+                  style={{
+                    border: '1px solid var(--border-default)',
+                    padding: '8px 12px',
+                    background: 'var(--bg-surface)',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    width: '100%',
+                    resize: 'vertical'
+                  }}
+                />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Un élément par ligne.</span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '2px' }}>
+                    {eventSuggestions[eventTheme]?.benefits?.map((sugg, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => handleAddSuggestion('metadata_benefits', sugg)}
+                        className="suggestion-chip"
+                      >
+                        {sugg}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div>
-                  <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Résultats attendus</label>
-                  <input type="text" value={form.metadata_outcomes} onChange={e => setForm({ ...form, metadata_outcomes: e.target.value })} placeholder="ex: Plan d'action..." className="input-field" />
+
+              <div>
+                <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Objectifs</label>
+                <textarea
+                  ref={objectivesRef}
+                  rows={3}
+                  value={form.metadata_objectives}
+                  onChange={e => setForm({ ...form, metadata_objectives: e.target.value })}
+                  placeholder="ex: Sensibilisation..."
+                  className="input-field"
+                  style={{
+                    border: '1px solid var(--border-default)',
+                    padding: '8px 12px',
+                    background: 'var(--bg-surface)',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    width: '100%',
+                    resize: 'vertical'
+                  }}
+                />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Un élément par ligne.</span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '2px' }}>
+                    {eventSuggestions[eventTheme]?.objectives?.map((sugg, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => handleAddSuggestion('metadata_objectives', sugg)}
+                        className="suggestion-chip"
+                      >
+                        {sugg}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div>
-                  <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Public cible</label>
-                  <input type="text" value={form.metadata_audience} onChange={e => setForm({ ...form, metadata_audience: e.target.value })} placeholder="ex: Étudiants..." className="input-field" />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Résultats attendus</label>
+                <textarea
+                  ref={outcomesRef}
+                  rows={3}
+                  value={form.metadata_outcomes}
+                  onChange={e => setForm({ ...form, metadata_outcomes: e.target.value })}
+                  placeholder="ex: Plan d'action..."
+                  className="input-field"
+                  style={{
+                    border: '1px solid var(--border-default)',
+                    padding: '8px 12px',
+                    background: 'var(--bg-surface)',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    width: '100%',
+                    resize: 'vertical'
+                  }}
+                />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Un élément par ligne.</span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '2px' }}>
+                    {eventSuggestions[eventTheme]?.outcomes?.map((sugg, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => handleAddSuggestion('metadata_outcomes', sugg)}
+                        className="suggestion-chip"
+                      >
+                        {sugg}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Public cible</label>
+                <textarea
+                  ref={audienceRef}
+                  rows={3}
+                  value={form.metadata_audience}
+                  onChange={e => setForm({ ...form, metadata_audience: e.target.value })}
+                  placeholder="ex: Étudiants..."
+                  className="input-field"
+                  style={{
+                    border: '1px solid var(--border-default)',
+                    padding: '8px 12px',
+                    background: 'var(--bg-surface)',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    width: '100%',
+                    resize: 'vertical'
+                  }}
+                />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Un élément par ligne.</span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '2px' }}>
+                    {eventSuggestions[eventTheme]?.audience?.map((sugg, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => handleAddSuggestion('metadata_audience', sugg)}
+                        className="suggestion-chip"
+                      >
+                        {sugg}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
