@@ -69,7 +69,9 @@ export function calculateTicketStats(event: EventForStats, tickets: TicketForSta
  * Génère un code de billet unique basé sur les initiales de l'utilisateur.
  */
 export function generateTicketCode(initials: string): string {
-  const randomStr = Math.random().toString(36).substring(2, 8).toUpperCase();
+  // Use crypto.randomUUID() which is cryptographically secure and available globally
+  // in both Node.js and the browser, avoiding import issues.
+  const randomStr = crypto.randomUUID().split('-')[0].substring(0, 6).toUpperCase();
   return `UP-${initials}-${randomStr}`;
 }
 
