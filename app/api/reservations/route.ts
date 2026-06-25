@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
-import { createHash } from 'crypto';
+import { createHash, randomBytes, randomUUID } from 'crypto';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { getSupabase, getSupabaseAdmin } from '@/utils/supabase/admin';
 import { generateTicketCode } from '@/lib/ticketUtils';
@@ -256,7 +256,7 @@ export async function POST(req: NextRequest) {
   const supabaseAdmin = getSupabaseAdmin();
   let tempPassword = '';
   try {
-    const generatedPass = Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 6).toUpperCase() + '1!';
+    const generatedPass = randomBytes(6).toString('base64').replace(/[^a-zA-Z0-9]/g, '') + randomBytes(3).toString('hex').toUpperCase() + '1!';
     const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password: generatedPass,
@@ -346,7 +346,7 @@ export async function POST(req: NextRequest) {
         const fileExt = typeof payment_proof_name === 'string' && payment_proof_name.includes('.') 
           ? payment_proof_name.split('.').pop() 
           : 'png';
-        const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
+        const fileName = `${randomUUID().replace(/-/g, '')}_${Date.now()}.${fileExt}`;
 
         const { error: uploadError, data: uploadData } = await supabaseAdmin.storage
           .from('payment_proofs')
